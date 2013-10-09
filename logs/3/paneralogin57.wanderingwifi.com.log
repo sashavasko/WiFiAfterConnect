@@ -1,0 +1,53 @@
+onLoad = [document.forms[0].submit();]
+Handling onLoad submit for [http://paneralogin57.wanderingwifi.com/login?AP_MAC=0003520A614F&CLIENT_IP=10.0.0.184&CLIENT_MAC=40-0E-85-2B-0F-4C&loginURL=https%3A%2F%2Fportals.wanderingwifi.com%3A8090%2Fgoform%2FHtmlLoginRequest]
+Data to post:[CLIENT_MAC=40-0E-85-2B-0F-4C&P_H_=1&CLIENT_IP=10.0.0.184&AP_MAC=0003520A614F&loginURL=https%3A%2F%2Fportals.wanderingwifi.com%3A8090%2Fgoform%2FHtmlLoginRequest]
+Data posted, checking result ...
+java.net.SocketTimeoutException
+	at java.net.PlainSocketImpl.read(PlainSocketImpl.java:491)
+	at java.net.PlainSocketImpl.access$000(PlainSocketImpl.java:46)
+	at java.net.PlainSocketImpl$PlainSocketInputStream.read(PlainSocketImpl.java:240)
+	at java.io.InputStream.read(InputStream.java:163)
+	at java.io.BufferedInputStream.fillbuf(BufferedInputStream.java:142)
+	at java.io.BufferedInputStream.read(BufferedInputStream.java:227)
+	at libcore.io.Streams.readAsciiLine(Streams.java:201)
+	at libcore.net.http.HttpEngine.readResponseHeaders(HttpEngine.java:573)
+	at libcore.net.http.HttpEngine.readResponse(HttpEngine.java:821)
+	at libcore.net.http.HttpURLConnectionImpl.getResponse(HttpURLConnectionImpl.java:283)
+	at libcore.net.http.HttpURLConnectionImpl.getInputStream(HttpURLConnectionImpl.java:177)
+	at com.wifiafterconnect.ParsedHttpInput.<init>(ParsedHttpInput.java:49)
+	at com.wifiafterconnect.WifiAuthenticator.postForm(WifiAuthenticator.java:233)
+	at com.wifiafterconnect.WifiAuthenticator.attemptAuthorization(WifiAuthenticator.java:250)
+	at com.wifiafterconnect.URLRedirectChecker.attemptAuthorization(URLRedirectChecker.java:89)
+	at com.wifiafterconnect.URLRedirectChecker.checkHttpConnection(URLRedirectChecker.java:207)
+	at com.wifiafterconnect.URLRedirectChecker.checkHttpConnection(URLRedirectChecker.java:243)
+	at com.wifiafterconnect.CheckRedirectService.onHandleIntent(CheckRedirectService.java:23)
+	at android.app.IntentService$ServiceHandler.handleMessage(IntentService.java:65)
+	at android.os.Handler.dispatchMessage(Handler.java:99)
+	at android.os.Looper.loop(Looper.java:137)
+	at android.os.HandlerThread.run(HandlerThread.java:60)
+
+Attempting authorization at [http://paneralogin57.wanderingwifi.com/login?AP_MAC=0003520A614F&CLIENT_IP=10.0.0.184&CLIENT_MAC=40-0E-85-2B-0F-4C&loginURL=https%3A%2F%2Fportals.wanderingwifi.com%3A8090%2Fgoform%2FHtmlLoginRequest]
+onLoad = [document.forms[0].submit();]
+Handling onLoad submit for [http://paneralogin57.wanderingwifi.com/login?AP_MAC=0003520A614F&CLIENT_IP=10.0.0.184&CLIENT_MAC=40-0E-85-2B-0F-4C&loginURL=https%3A%2F%2Fportals.wanderingwifi.com%3A8090%2Fgoform%2FHtmlLoginRequest]
+Data to post:[CLIENT_MAC=40-0E-85-2B-0F-4C&P_H_=1&CLIENT_IP=10.0.0.184&AP_MAC=0003520A614F&loginURL=https%3A%2F%2Fportals.wanderingwifi.com%3A8090%2Fgoform%2FHtmlLoginRequest]
+Data posted, checking result ...
+onLoad = []
+Detected Captive portal com.wifiafterconnect.handlers.WanderingWifiHandler@425bba68
+Attempting authorization at [http://paneralogin57.wanderingwifi.com/login?AP_MAC=0003520A614F&CLIENT_IP=10.0.0.184&CLIENT_MAC=40-0E-85-2B-0F-4C&loginURL=https%3A%2F%2Fportals.wanderingwifi.com%3A8090%2Fgoform%2FHtmlLoginRequest]
+Data to post:[null]
+onLoad = [document.forms[0].submit();]
+Handling onLoad submit for [http://paneralogin57.wanderingwifi.com/login?AP_MAC=0003520A614F&CLIENT_IP=10.0.0.184&CLIENT_MAC=40-0E-85-2B-0F-4C&loginURL=https%3A%2F%2Fportals.wanderingwifi.com%3A8090%2Fgoform%2FHtmlLoginRequest]
+Data to post:[CLIENT_MAC=40-0E-85-2B-0F-4C&P_H_=1&CLIENT_IP=10.0.0.184&AP_MAC=0003520A614F&loginURL=https%3A%2F%2Fportals.wanderingwifi.com%3A8090%2Fgoform%2FHtmlLoginRequest]
+Data posted, checking result ...
+onLoad = []
+Detected Captive portal com.wifiafterconnect.handlers.WanderingWifiHandler@424a69d0
+Attempting authorization at [http://paneralogin57.wanderingwifi.com/login?AP_MAC=0003520A614F&CLIENT_IP=10.0.0.184&CLIENT_MAC=40-0E-85-2B-0F-4C&loginURL=https%3A%2F%2Fportals.wanderingwifi.com%3A8090%2Fgoform%2FHtmlLoginRequest]
+Data to post:[null]
+onLoad = [document.forms[0].submit();]
+Handling onLoad submit for [http://paneralogin57.wanderingwifi.com/login?AP_MAC=0003520A614F&CLIENT_IP=10.0.0.184&CLIENT_MAC=40-0E-85-2B-0F-4C&loginURL=https%3A%2F%2Fportals.wanderingwifi.com%3A8090%2Fgoform%2FHtmlLoginRequest]
+Data to post:[CLIENT_MAC=40-0E-85-2B-0F-4C&P_H_=1&CLIENT_IP=10.0.0.184&AP_MAC=0003520A614F&loginURL=https%3A%2F%2Fportals.wanderingwifi.com%3A8090%2Fgoform%2FHtmlLoginRequest]
+Data posted, checking result ...
+onLoad = []
+Detected Captive portal com.wifiafterconnect.handlers.WanderingWifiHandler@425bd998
+Attempting authorization at [http://paneralogin57.wanderingwifi.com/login?AP_MAC=0003520A614F&CLIENT_IP=10.0.0.184&CLIENT_MAC=40-0E-85-2B-0F-4C&loginURL=https%3A%2F%2Fportals.wanderingwifi.com%3A8090%2Fgoform%2FHtmlLoginRequest]
+Data to post:[null]

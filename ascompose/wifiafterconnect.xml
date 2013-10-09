@@ -1,0 +1,52 @@
+<set var="scale" val=2/>
+<set var="tile_size" val="512*$scale"/>
+
+<hsv id=lock affected_hue=60 affected_radius=20 hue_offset=-40><img src="lock256.png"/></hsv>
+<rotate id=magic angle=90><scale width=proportional height="$tile_size*2/3"><img src="magic.png"/></scale></rotate>
+<scale id=wifi_white width="$tile_size*5/6" height=proportional><crop srcx=50 srcy=120 width=412 height=262><hsv value_offset=50 hue_offset=240><img src="wifi.png"/></hsv></crop></scale>
+<tile id=wifi tint="#771111FF"><recall srcid="wifi_white"/></tile>
+<scale id=password width="$tile_size/2" height=proportional><img src="password.png"/> </scale>
+<set var=margin val=40/>
+<set var="offset" val="100*$scale"/>
+<set var="bottom" val="40"/>
+<set var="offset_magic" val="40*$scale"/>
+<set var="wifi_y" val="0"/>
+<set var="wifi_x" val="0"/>
+<set var="wifi_center" val="$wifi.width/2"/>
+<set var="lock_center" val="$password.width/2"/>
+<set var="lock_y" val="$wifi_y+$wifi.height-$offset"/>
+<set var="lock_x" val="$wifi_center-$lock_center+(40*$scale)"/>
+
+<set var="pass_y" val="$lock_y+60+$lock_center"/>
+<set var="pass_x" val="$lock_x+$lock_center"/>
+	<solid color="#333322" x="$pass_x-10" y="$pass_y+15" width="$tile_size/3" height="$tile_size/10"/>
+	<text x="$pass_x" y="$pass_y" font="DefaultSans.ttf" point="100" fgcolor="#ffffff">****</text>
+
+<crop id=icon srcx="$margin*$scale" srcx="$margin*$scale" width="$tile_size-($margin*$scale*2)" height="$tile_size-($margin*$scale*2)">
+<composite>
+	<solid color="#00FFFFFF" width="$tile_size" height="$tile_size"/>
+	<recall y="$wifi_y" x="$wifi_x" srcid=wifi/>
+	<recall y="$lock_y" x="$lock_x" srcid=password/>
+	<recall y="$offset_magic+$margin" x="$tile_size-$magic.width-$offset_magic" srcid=magic/>
+</composite>
+</crop>
+
+
+<save dst="wifiafterconnect.png" format="png"><scale width=512 height=proportional><recall srcid=icon/></scale></save>
+<save dst="wifiafterconnect_256.png" format="png"><scale width=256 height=proportional><recall srcid=icon/></scale></save>
+<save dst="wifiafterconnect_xxhdpi.png" format="png"><scale width=144 height=proportional><recall srcid=icon/></scale></save>
+<save dst="wifiafterconnect_xhdpi.png" format="png"><scale width=96 height=proportional><recall srcid=icon/></scale></save>
+<save dst="wifiafterconnect_hdpi.png" format="png"><scale width=72 height=proportional><recall srcid=icon/></scale></save>
+<save dst="wifiafterconnect_mdpi.png" format="png"><scale width=48 height=proportional><recall srcid=icon/></scale></save>
+
+<tile id=wifi_red tint="#77FF0000"><recall srcid="wifi_white"/></tile>
+
+<crop srcx="$margin" srcx="$margin" width="$tile_size*2/3-($margin*2)" height="$tile_size*2/3-($margin*2)">
+<composite id=icon_small>
+	<solid color="#00FFFFFF" width="$tile_size*2/3" height="$tile_size*2/3"/>
+	<recall y="$margin+$wifi_y" x="$margin+$wifi_x" srcid=wifi_red/>
+	<recall y="$margin+$wifi_y-20" x="$margin+$wifi_x+20" srcid=magic/>
+</composite>
+</crop>
+
+<save dst="wifiac_small.png" format="png"><scale width=32 height=32><recall srcid=icon_small/></scale></save>

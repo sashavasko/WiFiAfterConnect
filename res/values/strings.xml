@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">WiFi AfterConnect</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="pref_title_logging">Logging</string>
+    <string name="pref_label_log_save_enable">Save each attempt into file</string>
+    <string name="pref_label_log_save_enable_summary">Save log file of each attempt - only usefull for debugging.</string>
+    <string name="pref_label_save_location">Use external SD Card</string>
+    <string name="pref_saveLogFileEnable">pref_saveLogFileEnable</string>
+    <string name="pref_saveLogDir">pref_saveLogDir</string>
+    <string name="pref_group_locked">When screen is locked</string>
+    <string name="pref_check_autodisable_wifi">Auto-disable wifi</string>
+    <string name="pref_check_autodisable_wifi_summary">Post notification about disabled WiFi allowing to re-enable it when screen is unlocked</string>
+    <string name="pref_lockedAutoDisableWifi">pref_lockedAutoDisableWifi</string>
+    <string name="pref_check_reenable_wifi_quiet">Quietly re-enable WiFi</string>
+    <string name="pref_ReenableWifiQuiet">pref_ReenableWifiQuiet</string>
+    <string name="pref_check_reenable_wifi_quiet_summary">Just re-enable wifi when notification is clicked without showing app screen</string>
+    <string name="pref_logging_summary">These are tools to help with debugging and should be off normally</string>
+    <string name="pref_EnableBackgroundAuth">pref_EnableBackgroundAuth</string>
+    <string name="pref_enable_background_auth">"Automate authentication "</string>
+    <string name="pref_enable_background_auth_summary">"Wait for WiFi connection and attempt automatic authentication if necessary "</string>
+    <string name="pref_URLToCheckHTTP">pref_URLToCheckHTTP</string>
+    <string name="pref_URLToCheckHTTP_title">HTTP Url</string>
+    <string name="prefcat_URL_title">URLs to use</string>
+    <string name="pref_URLToCheckHTTPS">pref_URLToCheckHTTPS</string>
+    <string name="pref_URLToCheckHTTPS_title">HTTPS Url</string>
+
+</resources>

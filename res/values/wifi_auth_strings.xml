@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="email_label">Email :</string>
+    <string name="username_label">Username :</string>
+    <string name="password_label">Password :</string>
+    <string name="save_password_label">Save password</string>
+    <string name="cancel_label">Cancel</string>
+    <string name="auth_label">Authenticate</string>
+    <string name="auth_required_label">Wifi requires authentication. Please enter your credentials below.</string>
+    <string name="save_password_note"> (Please note that saved password could be compromised if your device falls in to the wrong hands)</string>
+    <string name="auth_now_label">Authenticate now</string>
+    <string name="auth_now_disabled_label">WiFi not connected</string>
+    <string name="auth_now_checking_label">checking ...</string>
+    <string name="auth_now_inprocess_label">authenticating ...</string>
+    <string name="auth_now_online_label">online</string>
+    <string name="start_browser_label">Open Web Browser</string>
+    <string name="action_check_redirect">com.wifiafterconnect.CHECK_REDIRECT</string>
+    <string name="label_background_auth_enabled">On</string>
+    <string name="label_background_auth_disabled">Off</string>
+    <string name="title_disable_wifi">Disable WiFi?</string>
+    <string name="message_disable_wifi">Data connection will not be available until WiFi is disabled.</string>
+    <string name="button_disable_wifi">Disable WiFi</string>
+    <string name="button_keep_wifi">Do nothing</string>
+    <string name="check_always_for_this_site">Always do this for this site</string>
+    <string name="label_background_auth">Background authentication is </string>
+    <string name="label_delete_selected">Delete selected</string>
+    <string name="label_saved_sites">Previously authenticated sites with stored credentials:</string>
+    <string name="label_wifi">WiFi</string>
+    <string name="notif_wifi_disabled_title">WiFi disabled - click to re-enable</string>
+    <string name="notif_wifi_disabled_text">need credentials to pass web authentication</string>
+    <string name="label_inet_status">"Internet is "</string>
+    <string name="label_unavailable">Internet is unavailable</string>
+    <string name="label_available">Internet is available</string>
+    <string name="label_inet_checking">checking inet connection </string>
+    <string name="action_reenable_wifi">com.wifiafterconnect.REENABLE_WIFI</string>
+    <string name="label_settings">Settings</string>
+    <string name="success_notification">Logged into WiFi network</string>
+</resources>

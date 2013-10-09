@@ -1,0 +1,84 @@
+
+Read 11 lines:
+<HTML><TITLE></TITLE><BODY onLoad="document.forms[0].submit();"><FORM METHOD="POST" ACTION="/login"><INPUT TYPE="HIDDEN" NAME="AP_MAC" VALUE="0003520A614F"><INPUT TYPE="HIDDEN" NAME="CLIENT_IP" VALUE="10.0.0.100"><INPUT TYPE="HIDDEN" NAME="CLIENT_MAC" VALUE="40-0E-85-2B-0F-4C"><INPUT TYPE="HIDDEN" NAME="loginURL" VALUE="https://portals.wanderingwifi.com:8090/goform/HtmlLoginRequest"><INPUT TYPE="HIDDEN" NAME="P_H_" VALUE="1"></BODY></HTML>
+Field[0(Server)] = [PowerTeamJavaServer]
+Field[1(Date)] = [Mon, 30 Sep 2013 22:38:59 GMT]
+Field[2(Content-type)] = [text/html]
+Field[3(Content-length)] = [465]
+Field[4(Connection)] = [close]
+Field[5(X-Android-Sent-Millis)] = [1380580739306]
+Field[6(X-Android-Received-Millis)] = [1380580739377]
+Redirected to  [http://paneralogin57.wanderingwifi.com/login?AP_MAC=0003520A614F&CLIENT_IP=10.0.0.100&CLIENT_MAC=40-0E-85-2B-0F-4C&loginURL=https%3A%2F%2Fportals.wanderingwifi.com%3A8090%2Fgoform%2FHtmlLoginRequest]
+Switching to logging to file:/data/data/com.wifiafterconnect/files/paneralogin57.wanderingwifi.com.log
+
+
+Read 5 lines:
+<html><title>Login Page</title><body> This page will be automatically redirected to <a href="http://63.167.102.204:880/kmart/agreement.html?hs_server=192.168.251.3?Qv=it_qpmjdz=Hvftu@bbb_qpmjdz=Hvftu@dmjfou_njou=2:6525695@dmjfou_nbd=51.1F.96.3C.1G.5D@ttje=Hvftu@bq_nbd=6D.1F.9C.B6.DB.49"> Page</a></body></html>
+Field[0(Server)] = [hsdredirectsrvr/1.0]
+Field[1(Date)] = [Mon, 30 Sep 2013 22:44:45 GMT]
+Field[2(Content-Type)] = [text/html; charset=iso-8859-1]
+Field[3(Connection)] = [close]
+Field[4(Location)] = [http://63.167.102.204:880/kmart/agreement.html?hs_server=192.168.251.3?Qv=it_qpmjdz=Hvftu@bbb_qpmjdz=Hvftu@dmjfou_njou=2:6525695@dmjfou_nbd=51.1F.96.3C.1G.5D@ttje=Hvftu@bq_nbd=6D.1F.9C.B6.DB.49]
+Field[5(X-Android-Sent-Millis)] = [1380581084623]
+Field[6(X-Android-Received-Millis)] = [1380581084648]
+Redirected to  [http://63.167.102.204:880/kmart/agreement.html?hs_server=192.168.251.3?Qv=it_qpmjdz=Hvftu@bbb_qpmjdz=Hvftu@dmjfou_njou=2:6525695@dmjfou_nbd=51.1F.96.3C.1G.5D@ttje=Hvftu@bq_nbd=6D.1F.9C.B6.DB.49] have to handle explicitely
+Switching to logging to file:/data/data/com.wifiafterconnect/files/63.167.102.204.log
+
+
+Read 25 lines:
+<html>
+<!--<?xml version="1.0" encoding="UTF-8"?>
+	<WISPAccessGatewayParam  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="http://hotspot.boingo.aero/xml/WISPAccessGatewayParam.xsd">
+	<Redirect>
+		<AccessProcedure>1.0</AccessProcedure>
+		<AccessLocation></AccessLocation>
+		<LocationName></LocationName>
+		<LoginURL>http://hotspot.boingo.aero/login?target=xml</LoginURL>
+		<MessageType>100</MessageType>
+		<ResponseCode>0</ResponseCode>
+	</Redirect>
+	</WISPAccessGatewayParam>
+-->
+
+<head><title>...</title>
+<meta http-equiv="refresh" content="0; url=http://guestlogin.target.com/pre_login.php?ip=10.23.175.13">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="-1">
+</head>
+<body></body>
+</html>
+
+Field[0(Cache-Control)] = [no-cache]
+Field[1(Content-Length)] = [773]
+Field[2(Content-Type)] = [text/html]
+Field[3(Date)] = [Mon, 30 Sep 2013 22:56:11 GMT]
+Field[4(Expires)] = [0]
+Field[5(X-Android-Sent-Millis)] = [1380581770968]
+Field[6(X-Android-Received-Millis)] = [1380581771280]
+Success
+
+
+
+Trying [http://www.google.com]
+Read 25 lines:
+<html><!--<?xml version="1.0" encoding="UTF-8"?>  <WISPAccessGatewayParam  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  xsi:noNamespaceSchemaLocation="http://hotspot.boingo.aero/xml/WISPAccessGatewayParam.xsd">    <Redirect>	<AccessProcedure>1.0</AccessProcedure>	<AccessLocation></AccessLocation>	<LocationName></LocationName>	<LoginURL>http://hotspot.boingo.aero/login?target=xml</LoginURL>	<MessageType>100</MessageType>	<ResponseCode>0</ResponseCode>    </Redirect>  </WISPAccessGatewayParam>--><head><title>...</title><meta http-equiv="refresh" content="0; url=http://guestlogin.target.com/pre_login.php?ip=10.23.175.13"><meta http-equiv="pragma" content="no-cache"><meta http-equiv="expires" content="-1"></head><body></body></html>
+Field[0(Cache-Control)] = [no-cache]
+Field[1(Content-Length)] = [773]
+Field[2(Content-Type)] = [text/html]
+Field[3(Date)] = [Mon, 30 Sep 2013 22:56:12 GMT]
+Field[4(Expires)] = [0]
+Field[5(X-Android-Sent-Millis)] = [1380581771776]
+Field[6(X-Android-Received-Millis)] = [1380581771866]
+Success
+Read 1 lines:
+
+
+<HTML><HEAD><TITLE> Web Authentication Redirect</TITLE><META http-equiv="Cache-control" content="no-cache"><META http-equiv="Pragma" content="no-cache"><META http-equiv="Expires" content="-1"><META http-equiv="refresh" content="1; URL=https://www.wlc.oa.mo.gov/login.html?redirect=www.google.com/"></HEAD></HTML>
+Field[0(Location)] = [https://www.wlc.oa.mo.gov/login.html?redirect=www.google.com/]
+Field[1(Content-Type)] = [text/html]
+Field[2(Content-Length)] = [314]
+Field[3(X-Android-Sent-Millis)] = [1380635303541]
+Field[4(X-Android-Received-Millis)] = [1380635303547]
+Redirected to  [https://www.wlc.oa.mo.gov/login.html?redirect=www.google.com/] have to handle explicitely
+Switching to logging to file:/data/data/com.wifiafterconnect/files/www.wlc.oa.mo.gov.log
