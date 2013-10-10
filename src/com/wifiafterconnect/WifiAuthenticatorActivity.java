@@ -18,6 +18,7 @@ package com.wifiafterconnect;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 
 import com.wifiafterconnect.html.HtmlInput;
 import com.wifiafterconnect.util.Logger;
@@ -58,6 +59,7 @@ public class WifiAuthenticatorActivity extends FragmentActivity
    	private Button buttonAuthenticate = null;
    	private CheckBox checkAlwaysDoThat = null;
    	private TableLayout fieldsTable = null;
+   	private ArrayList<View> edits = new ArrayList<View>();
    	
 	public class RunAuthTask extends AsyncTask<Void, Void, Boolean> {
 
@@ -79,6 +81,10 @@ public class WifiAuthenticatorActivity extends FragmentActivity
 	}
 
 	public void onAuthenticateClick(View v) {
+		
+		for (View ev : edits)
+			view2Params(ev);
+		
 		if (checkSavePassword != null)
 			authParams.savePassword = checkSavePassword.isChecked();
 		
@@ -150,6 +156,7 @@ public class WifiAuthenticatorActivity extends FragmentActivity
    		
    		fieldsTable = (TableLayout)findViewById(R.id.fieldsTableLayout);
    		fieldsTable.removeAllViews();
+   		edits.clear();
    		Log.d(Constants.TAG, "Adding controls...");
    		HtmlInput passwordField = authParams.getFieldByType(HtmlInput.TYPE_PASSWORD);
   	   	for (HtmlInput i : authParams.getFields()) {
@@ -172,25 +179,7 @@ public class WifiAuthenticatorActivity extends FragmentActivity
     	performAction (authParams.authAction); 
     }
     
-    protected EditText setField (int id, final String val, final String label, int labelid) {
-    	EditText editView = (EditText)findViewById(id);
-    	TextView labelView = (TextView)findViewById(labelid);
-    	if (label == null || label.isEmpty()) {
-    		if (editView != null)
-    			editView.setVisibility (View.GONE);
-    		if (labelView != null)
-    			labelView.setVisibility (View.GONE);
-    	}else {
-    		if (editView != null)
-    			editView.setText(val);
-    		if (labelView != null)
-    			labelView.setText(label);
-    		return editView;
-    	}
-    	return null;
-    }
-
-    protected void view2Params (View v) {
+    private void view2Params (View v) {
 		if (v instanceof EditText && authParams != null) {
 			EditText edit = (EditText)v;
 			String tag = (String) v.getTag();
@@ -200,7 +189,7 @@ public class WifiAuthenticatorActivity extends FragmentActivity
 		}
     }
     
-    protected void addField (HtmlInput field) {
+    private void addField (HtmlInput field) {
 		Log.d(Constants.TAG, "adding ["+field.getName() + "], type = [" + field.getType()+"]");
 
     	TextView labelView =  new TextView(this);
@@ -212,22 +201,18 @@ public class WifiAuthenticatorActivity extends FragmentActivity
     	editView.setInputType(field.getAndroidInputType());
     	editView.setText (field.getValue());
     	editView.setTag(field.getName());
+    	editView.setFocusable (true);
     	
-    	editView.setOnFocusChangeListener(new OnFocusChangeListener() {
-    	    public void onFocusChange(View v, boolean hf) {
-    	    	view2Params (v);
-    	    }
-    	});
+    	edits.add(editView);
+    	
     	editView.setOnEditorActionListener(new EditText.OnEditorActionListener() {
 			@Override
 			public boolean onEditorAction(TextView v, int actionId,	KeyEvent event) {
     			if (actionId == EditorInfo.IME_ACTION_DONE) {
-    				view2Params (v);
     				onAuthenticateClick(v);
     			}
     			return false;
 			}
-
     	});    	
     	
     	TableRow row = new TableRow (this);
