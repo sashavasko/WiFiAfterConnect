@@ -16,13 +16,11 @@
 
 package com.wifiafterconnect.handlers;
 
-import java.net.URL;
-
 import com.wifiafterconnect.WifiAuthParams;
 import com.wifiafterconnect.html.HtmlForm;
 import com.wifiafterconnect.html.HtmlPage;
 
-public class UniFiHandler extends CaptivePageHandler {
+public class UniFiHandler extends CaptivePageHandler implements CaptivePageHandler.Detection{
 
 	/*
 	 * http://community.ubnt.com/unifi
@@ -32,22 +30,26 @@ public class UniFiHandler extends CaptivePageHandler {
 	 * which has checkbox for accepting TOU.
 	 * 
 	 */
-	public UniFiHandler(URL url, HtmlPage page) {
-		super(url, page);
-	}
+	public static final int LOGIN_FORM = 0;
+	
 
 	@Override
 	public boolean checkParamsMissing(WifiAuthParams params) {
-		return checkUsernamePasswordMissing (params, page.getForm(0));
+		return checkUsernamePasswordMissing (params);
 	}
 
 	@Override
-	public String getPostData(WifiAuthParams params) {
-		HtmlForm form = page.getForm(0);
-		if (form != null) {
-			form.fillInputs(params);
-			return form.formatPostData();
-		}
-		return null;
+	public Boolean detect(HtmlPage page) {
+		return (page.getForm(LOGIN_FORM) != null && page.getForm(LOGIN_FORM).hasInputWithClass("button requires-tou"));
+	}
+
+	@Override
+	public HtmlForm getLoginForm() {
+		return page != null ? page.getForm(LOGIN_FORM) : null;
+	}
+
+	@Override
+	public void validateLoginForm(WifiAuthParams params, HtmlForm form) {
+		// Should not need anything
 	}
 }

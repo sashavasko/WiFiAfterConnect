@@ -1,11 +1,24 @@
-/**
- * 
+/*
+ * Copyright (C) 2013 Sasha Vasko <sasha at aftercode dot net> 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.wifiafterconnect.handlers;
 
 import java.net.URL;
 
 import com.wifiafterconnect.WifiAuthParams;
+import com.wifiafterconnect.html.HtmlForm;
 import com.wifiafterconnect.html.HtmlPage;
 
 /**
@@ -37,10 +50,31 @@ import com.wifiafterconnect.html.HtmlPage;
  * Don't know if it all is clever or mad.
  *  
  */
-public class WiNGHandler extends CaptivePageHandler {
+public class WiNGHandler extends CaptivePageHandler implements CaptivePageHandler.Detection{
 
-	public WiNGHandler(URL url, HtmlPage page) {
-		super(url, page);
+	private String qV = "";
+	private String hsServer = "";
+	
+	private static final String QUERY_VAR_REGEX = "[?]";
+	private static final String QUERY_VAR_QV = "Qv";
+	private static final String QUERY_VAR_HS_SERVER = "hs_server";
+	private static final String LOGIN_FORM_NAME = "frmLogin";
+
+	@Override
+	public void setPage(HtmlPage page) {
+		super.setPage(page);
+		qV = "";
+		hsServer = "";
+
+		try {
+			for (String v : page.getUrl().getQuery().split(QUERY_VAR_REGEX)) {
+				if (v.startsWith(QUERY_VAR_QV))
+					qV = v.substring(3);
+				else if (v.startsWith(QUERY_VAR_HS_SERVER))
+					hsServer = v.substring(10);
+			}
+		}catch (NullPointerException e) { // don't care
+		}
 	}
 
 	/* (non-Javadoc)
@@ -48,17 +82,45 @@ public class WiNGHandler extends CaptivePageHandler {
 	 */
 	@Override
 	public boolean checkParamsMissing(WifiAuthParams params) {
-		// TODO Auto-generated method stub
-		return false;
+		// just in case
+		return checkUsernamePasswordMissing (params);
 	}
 
-	/* (non-Javadoc)
-	 * @see com.wifiafterconnect.handlers.CaptivePageHandler#getPostData(com.wifiafterconnect.WifiAuthParams)
-	 */
 	@Override
-	public String getPostData(WifiAuthParams params) {
-		// TODO Auto-generated method stub
-		return null;
+	public Boolean detect(HtmlPage page) {
+		boolean hasQv = false;
+		boolean hasHsServer = false;
+		boolean hasFrmLogin = false;
+		try {
+			for (String v : page.getUrl().getQuery().split(QUERY_VAR_REGEX)) {
+				if (v.startsWith(QUERY_VAR_QV))
+					hasQv = true;
+				else if (v.startsWith(QUERY_VAR_HS_SERVER))
+					hasHsServer = true;
+			}
+		}catch (NullPointerException e) {
+			return false;
+		}
+		hasFrmLogin = (page.getForm(LOGIN_FORM_NAME)!=null);
+		return (hasQv && hasHsServer && hasFrmLogin);
+	}
+
+	@Override
+	public HtmlForm getLoginForm() {
+		return page != null ? page.getForm(LOGIN_FORM_NAME) : null;
+	}
+
+	@Override
+	public URL getPostUrl() {
+		// TODO rewrite with values from port/postToURL javascript vars?
+		return super.getPostUrl();
+	}
+
+	@Override
+	public void validateLoginForm(WifiAuthParams params, HtmlForm form) {
+		form.setInputValue ("f_" + QUERY_VAR_QV, qV); 
+		form.setInputValue ("f_" + QUERY_VAR_HS_SERVER, hsServer);
+		form.setInputValue ("agree", "Yes");
 	}
 
 }

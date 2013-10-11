@@ -15,8 +15,6 @@
  */
 package com.wifiafterconnect.handlers;
 
-import java.net.URL;
-
 import com.wifiafterconnect.WifiAuthParams;
 import com.wifiafterconnect.html.HtmlForm;
 import com.wifiafterconnect.html.HtmlPage;
@@ -25,33 +23,25 @@ import com.wifiafterconnect.html.HtmlPage;
  * @author sasha
  *
  */
-public class WanderingWifiHandler extends CaptivePageHandler {
-
-	public WanderingWifiHandler(URL url, HtmlPage page) {
-		super(url, page);
-	}
+public class WanderingWifiHandler extends CaptivePageHandler implements CaptivePageHandler.Detection{
 
 	/* (non-Javadoc)
 	 * @see com.wifiafterconnect.handlers.CaptivePageHandler#checkParamsMissing(com.wifiafterconnect.WifiAuthenticator.WifiAuthParams)
 	 */
 	@Override
 	public boolean checkParamsMissing(WifiAuthParams params) {
-		return checkUsernamePasswordMissing (params, page.getForm());
+		return checkUsernamePasswordMissing (params);
 	}
 
-	/* (non-Javadoc)
-	 * @see com.wifiafterconnect.handlers.CaptivePageHandler#getPostData(com.wifiafterconnect.WifiAuthenticator.WifiAuthParams)
-	 */
 	@Override
-	public String getPostData(WifiAuthParams params) {
-		HtmlForm form = page.getForm();
-		if (form != null) {
-			form.fillInputs(params);
-			// TODO need to check onClick script for the Login Button
-			form.setInputValue ("Action", "Login"); 
-			return form.formatPostData();
-		}
-		return null;
+	public Boolean detect(HtmlPage page) {
+		return (page.getUrl().getHost().contains("wanderingwifi") && page.getForm() != null);
+	}
+
+	@Override
+	public void validateLoginForm(WifiAuthParams params, HtmlForm form) {
+		// TODO need to check onClick script for the Login Button
+		form.setInputValue ("Action", "Login"); 
 	}
 
 }

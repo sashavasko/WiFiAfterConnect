@@ -15,8 +15,6 @@
  */
 package com.wifiafterconnect.handlers;
 
-import java.net.URL;
-
 import com.wifiafterconnect.WifiAuthParams;
 import com.wifiafterconnect.html.HtmlForm;
 import com.wifiafterconnect.html.HtmlPage;
@@ -25,32 +23,30 @@ import com.wifiafterconnect.html.HtmlPage;
  * @author sasha
  *
  */
-public class CiscoHandler extends CaptivePageHandler {
-/*
- * See CISCO docs at http://www.cisco.com/en/US/docs/wireless/controller/7.3/configuration/guide/b_wlc-cg_chapter_01011.html
- */
-	public CiscoHandler(URL url, HtmlPage page) {
-		super(url, page);
-	}
+public class CiscoHandler extends CaptivePageHandler implements CaptivePageHandler.Detection{
+
+	/*
+	 * See CISCO docs at http://www.cisco.com/en/US/docs/wireless/controller/7.3/configuration/guide/b_wlc-cg_chapter_01011.html
+	 */
 
 	/* (non-Javadoc)
 	 * @see com.wifiafterconnect.handlers.CaptivePageHandler#checkParamsMissing(com.wifiafterconnect.WifiAuthenticator.WifiAuthParams)
 	 */
 	@Override
 	public boolean checkParamsMissing(WifiAuthParams params) {
-		return checkUsernamePasswordMissing (params, page.getForm());
+		return checkUsernamePasswordMissing (params);
 	}
 
 	@Override
-	public String getPostData(WifiAuthParams params) {
+	public Boolean detect(HtmlPage page) {
 		HtmlForm form = page.getForm();
-		if (form != null) {
-			form.fillInputs(params);
-			// this could be different if submitAction script altered from Cisco's sample :
-			form.setInputValue ("buttonClicked", "4"); 
-			return form.formatPostData();
-		}
-		return null;
+		return (form != null && form.hasInput("buttonClicked"));
+	}
+
+	@Override
+	public void validateLoginForm(WifiAuthParams params, HtmlForm form) {
+		// this could be different if submitAction script altered from Cisco's sample :
+		form.setInputValue ("buttonClicked", "4"); 
 	}
 
 

@@ -39,6 +39,16 @@ public class HtmlPage {
 	private String onLoad = "";
 	private String metaRefresh = "";
 	
+	private URL url = null;
+	
+	public HtmlPage (URL url){
+		this.url = url;
+	}
+	
+	public URL getUrl () {
+		return url;
+	}
+	
 	public boolean parse (String html) {
 		this.source = html;
 		
@@ -145,4 +155,5 @@ public class HtmlPage {
 		
 		return url;
 	}
+
 }

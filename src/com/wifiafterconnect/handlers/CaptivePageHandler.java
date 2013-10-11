@@ -17,6 +17,7 @@
 package com.wifiafterconnect.handlers;
 
 import java.net.URL;
+import java.util.HashMap;
 
 import com.wifiafterconnect.Constants;
 import com.wifiafterconnect.WifiAuthParams;
@@ -28,53 +29,130 @@ import com.wifiafterconnect.html.HtmlPage;
 
 public abstract class CaptivePageHandler {
 
-	public static CaptivePageHandler autodetect (URL url, HtmlPage page) {
-		//TODO: this needs to go into actual classes ?
-		
-		if (url.getHost().contains("wanderingwifi"))
-			return new WanderingWifiHandler(url, page);
-		
-		HtmlForm form = page.getForm();
-		if (form != null && form.hasInput("buttonClicked"))
-			return new CiscoHandler(url, page);
-		
-		// This appears to be pretty unique :
-		if (form != null && form.hasInputWithClass("button requires-tou"))
-			return new UniFiHandler(url, page);
+	public interface Detection {
+		public Boolean detect(HtmlPage page); 
+	}
+	
+	// Strictly speaking we don't really need a map here for now
+	// May add methods for listing available handlers in future
+	private static HashMap <String,Class<? extends Detection>> registeredHandlers = null;
+	
+	// Using Reflection and package listing is way too much trouble
+	private static final String[] standardHandlers = new String[] {
+		"CiscoHandler",
+		"UniFiHandler",
+		"WanderingWifiHandler",
+		"WiNGHandler"
+	};
 
+	@SuppressWarnings("unchecked")
+	private static void registerStandardHandlers() {
+		if (registeredHandlers != null)
+			return;
+		
+		registeredHandlers = new HashMap<String,Class<? extends Detection>>();
+		for (String handlerName : standardHandlers) {
+			try {
+				registerHandler ((Class<? extends Detection>)Class.forName(CaptivePageHandler.class.getPackage().getName() + '.' + handlerName));
+			} catch (ClassNotFoundException e) {// don't care
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * Register new Captive Portal handler at runtime.
+	 * 
+	 * @param handler - class of the handler to be registered. 
+	 * Must extend CaptivePageHandler and implement CaptivePageHandler.Detection
+	 */
+	public static void registerHandler (Class<? extends Detection> handler) {
+		if (registeredHandlers == null)
+			registerStandardHandlers();
+			
+		registeredHandlers.put (handler.getName(), handler);
+	}
+	
+	// THE FACTORY
+	public static CaptivePageHandler autodetect (HtmlPage page) {
+		
+		if (page == null || page.getForm() == null)
+			return null;
+		
+		if (registeredHandlers == null)
+			registerStandardHandlers();
+		
+		for (Class<? extends Detection> handlerClass : registeredHandlers.values()) {
+			try {
+				CaptivePageHandler handler = (CaptivePageHandler) handlerClass.newInstance();
+				//Method m = handlerClass.getMethod("detect", HtmlPage.class);
+				//Boolean result = (Boolean)m.invoke(handler, page);
+				Detection d = (Detection)handler;
+				Boolean result = d.detect(page);
+				Log.d(Constants.TAG, "detecting " + handlerClass.getName() + " result = " + result);
+				if (result) {
+					handler.setPage(page);
+					return handler;
+				}
+//			} catch (NoSuchMethodException e) { e.printStackTrace();
+			} catch (InstantiationException e) {
+				e.printStackTrace();
+				return null;
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+				return null;
+			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
+//			} catch (InvocationTargetException e) {		e.printStackTrace();
+			} catch (NullPointerException e) { // ignore
+			}
+		}
 		return null;
 	}
 	
 	
-	protected URL originalUrl;
-	protected HtmlPage page;
+	protected HtmlPage page = null;
 	
-	public CaptivePageHandler (URL url, HtmlPage page) {
-		this.originalUrl = url;
+	public void setPage (HtmlPage page) {
 		this.page = page;
 	}
 	
 	public abstract boolean checkParamsMissing (WifiAuthParams params);
-	public abstract String getPostData (WifiAuthParams params);
+	public abstract void validateLoginForm (WifiAuthParams params, HtmlForm form);
+	
+	public String getPostData (WifiAuthParams params) {
+		HtmlForm form = getLoginForm();
+		if (form != null) {
+			form.fillInputs(params);
+			validateLoginForm (params, form);
+			return form.formatPostData();
+		}
+		return null;
+	}
 
+	public HtmlForm getLoginForm () {
+		return page != null ? page.getForm() : null;
+	}
+	
 	/* 
 	 * Possibly to be overriden in subclasses
 	 */
 	public URL getPostUrl () 
 	{ 
-		HtmlForm form = page.getForm();
+		HtmlForm form = getLoginForm();
 		if (form != null)
-			return form.formatActionURL (originalUrl);
-		return originalUrl; 
+			return form.formatActionURL (page.getUrl());
+		return page.getUrl(); 
 	};
 	
-	public boolean checkUsernamePasswordMissing (WifiAuthParams params, HtmlForm form){
+	public boolean checkUsernamePasswordMissing (WifiAuthParams params){
+		HtmlForm form = getLoginForm();
 		Log.d(Constants.TAG, "Checking for missing params. Form = " + form);
 		return (form != null && form.isParamMissing(params, WifiAuthParams.USERNAME)||form.isParamMissing(params, WifiAuthParams.PASSWORD)); 
 	}
 	
 	public WifiAuthParams addMissingParams (WifiAuthParams params) {
-		HtmlForm form = page.getForm();
+		HtmlForm form = getLoginForm();
 		if (form != null) 
 			params = form.fillParams (params);
 		return params;

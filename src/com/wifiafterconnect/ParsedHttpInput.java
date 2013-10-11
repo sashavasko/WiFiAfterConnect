@@ -35,15 +35,12 @@ import com.wifiafterconnect.util.Logger;
 public class ParsedHttpInput {
 
 	private Logger logger;
-	private URL url;
-	private String html = null;
 	private CaptivePageHandler captiveHandler = null;
 	private HtmlPage htmlPage;
 
 	public ParsedHttpInput (Logger logger, URL url, String html) {
 		this.logger = logger;
-		this.url = url;
-		parse (html);
+		parse (url, html);
 	}
 
 	public static ParsedHttpInput receive (Logger logger, HttpURLConnection conn) {
@@ -87,10 +84,9 @@ public class ParsedHttpInput {
 	    return parsed;
 	}
 	
-	public void parse(String html) {
-		this.html = html;
+	public void parse(URL url, String html) {
 		
-		htmlPage = new HtmlPage();
+		htmlPage = new HtmlPage(url);
 		if (!html.isEmpty()) {
 			if (!htmlPage.parse (html)) {
 				if (logger != null)
@@ -100,7 +96,7 @@ public class ParsedHttpInput {
 
 			if (!submitOnLoad()) {
 				// Probably the actual login page
-				captiveHandler = CaptivePageHandler.autodetect (url, htmlPage);
+				captiveHandler = CaptivePageHandler.autodetect (htmlPage);
 				if (logger != null && captiveHandler != null)
 					logger.debug("Detected Captive portal "+ captiveHandler);
 			}
@@ -138,7 +134,11 @@ public class ParsedHttpInput {
 	}
 
 	public final String getHtml() {
-		return html;
+		return htmlPage.getSource();
+	}
+
+	public final URL getUrl() {
+		return htmlPage.getUrl();
 	}
 
 	public boolean hasMetaRefresh() {
