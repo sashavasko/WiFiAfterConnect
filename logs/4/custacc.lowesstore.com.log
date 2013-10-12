@@ -1,0 +1,547 @@
+Internet connection is Blocked by Captive portal
+Internet connection is Blocked by Captive portal
+Internet connection is Blocked by Captive portal
+Trying [http://custacc.lowesstore.com:880/Store-Guest/agreement.html?hs_server=custacc.lowesstore.com?Qv=it_qpmjdz=Tupsf.Hvftu@bbb_qpmjdz=@dmjfou_njou=2:63:9667@dmjfou_nbd=51.1F.96.3C.1G.5D]
+Read 9996 bytes:
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html> 
+
+<head> 
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Lowe's Customer Wi-Fi Main Page</title>
+<meta name="generator" content="Virtual Mechanics SiteSpinner Pro V2 291L - Trial Only">
+<meta name="viewport" content="width=240">
+<meta http-equiv="imagetoolbar" content="false">
+
+<style type="text/css">
+<!--
+@media all {
+
+a:link {color: #0000ff;}
+a:visited {color: #800080;}
+a:active {color: #ff0000;}
+
+body {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  text-align: center;
+  background-color: #e9e9e9;
+}
+img {
+  border-width: 0;
+  vertical-align: top;
+}
+.dfltt {
+  font-family: 'Times New Roman';
+  font-size: 12px;
+  font-weight: normal;
+  font-style: normal;
+  text-decoration: none;
+  text-align: left;
+  color: #000000;
+}
+.lalign {
+  position: relative;
+  text-align: left;
+}
+.ralign {
+  position: relative;
+  text-align: right;
+}
+.calign {
+  position: relative;
+  text-align: center;
+}
+.jalign {
+  position: relative;
+  text-align: justify;
+}
+form#frmLogin {
+  visibility: visible;
+  margin: 0px;
+  font-size: 10px;
+}
+.dfltf  {
+  position: absolute;
+  color: #000000;
+  font-family: 'Times New Roman';
+  font-size: 12px;
+  font-weight: normal;
+  font-style: normal;
+  text-decoration: none;
+}
+form#Oform6 {
+  visibility: visible;
+  margin: 0px;
+  font-size: 10px;
+}
+}
+@media screen, print {
+
+a:link {color: #0000ff;}
+a:visited {color: #800080;}
+a:active {color: #ff0000;}
+
+body {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  text-align: center;
+  background-color: #e9e9e9;
+}
+img {
+  border-width: 0;
+  vertical-align: top;
+}
+.dfltt {
+  font-family: 'Times New Roman';
+  font-size: 12px;
+  font-weight: normal;
+  font-style: normal;
+  text-decoration: none;
+  text-align: left;
+  color: #000000;
+}
+.lalign {
+  position: relative;
+  text-align: left;
+}
+.ralign {
+  position: relative;
+  text-align: right;
+}
+.calign {
+  position: relative;
+  text-align: center;
+}
+.jalign {
+  position: relative;
+  text-align: justify;
+}
+form#frmLogin {
+  visibility: visible;
+  margin: 0px;
+  font-size: 10px;
+}
+.dfltf  {
+  position: absolute;
+  color: #000000;
+  font-family: 'Times New Roman';
+  font-size: 12px;
+  font-weight: normal;
+  font-style: normal;
+  text-decoration: none;
+}
+form#Oform6 {
+  visibility: visible;
+  margin: 0px;
+  font-size: 10px;
+}
+
+#centered {
+  position: relative;
+  width: 790px;
+  height: 100%;
+  margin: 0px auto 0 auto;
+  text-align: left;
+  padding-left: 1px;
+  cursor: default;
+}
+#Oobj1 {
+  position: absolute;
+  font-size: 10px;
+  z-index: 1;
+  left: 0.10em;
+  top: 0.30em;
+  width: 12.30em;
+  height: 5.60em;
+}
+img#Ggeo1 {
+  width: 100%;
+  height: 100%;
+}
+#Oobj2 {
+  position: absolute;
+  font-size: 10px;
+  z-index: 2;
+  text-align: left;
+  left: 0.40em;
+  top: 6.60em;
+  width: 12.20em;
+  height: 4.50em;
+}
+.txt0 {
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+}
+.bold {font-weight: bold;}
+#Oobj3 {
+  position: absolute;
+  font-size: 10px;
+  z-index: 3;
+  text-align: left;
+  left: 0.40em;
+  top: 10.90em;
+  width: 7.50em;
+  height: 2.00em;
+}
+.txt1 {font-family: Arial, sans-serif;}
+#Oobj4 {
+  position: absolute;
+  font-size: 10px;
+  z-index: 4;
+  text-align: left;
+  left: 0.40em;
+  top: 12.80em;
+  width: 24.60em;
+  height: 6.40em;
+}
+.txt2 {
+  font-family: Arial, sans-serif;
+  color: #0000b0;
+}
+#Oobj5 {
+  position: absolute;
+  font-size: 10px;
+  z-index: 5;
+  text-align: left;
+  left: 0.30em;
+  top: 27.40em;
+  width: 23.40em;
+  height: 4.40em;
+}
+.txt3 {
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+}
+#Oobj8 {
+  position: absolute;
+  font-size: 10px;
+  z-index: 6;
+  left: 0.00em;
+  top: 19.50em;
+  width: 2.10em;
+  height: 2.00em;
+}
+#Gform1 {
+  width: 100%;
+  height: 100%;
+}
+#Oobj10 {
+  position: absolute;
+  font-size: 10px;
+  z-index: 8;
+  left: 3.90em;
+  top: 22.40em;
+  width: 10.00em;
+  height: 3.00em;
+}
+#submit {
+  width: 100%;
+  height: 100%;
+}
+#Oobj9 {
+  position: absolute;
+  font-size: 10px;
+  z-index: 7;
+  text-align: left;
+  left: 1.80em;
+  top: 20.00em;
+  width: 16.70em;
+  height: 1.90em;
+}
+
+}
+@media handheld, only screen and (max-device-width: 241px) {
+
+a:link {color: #0000ff;}
+a:visited {color: #800080;}
+a:active {color: #ff0000;}
+
+body {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  text-align: center;
+  background-color: #e9e9e9;
+}
+img {
+  border-width: 0;
+  vertical-align: top;
+}
+.dfltt {
+  font-family: 'Times New Roman';
+  font-size: 12px;
+  font-weight: normal;
+  font-style: normal;
+  text-decoration: none;
+  text-align: left;
+  color: #000000;
+}
+.lalign {
+  position: relative;
+  text-align: left;
+}
+.ralign {
+  position: relative;
+  text-align: right;
+}
+.calign {
+  position: relative;
+  text-align: center;
+}
+.jalign {
+  position: relative;
+  text-align: justify;
+}
+form#frmLogin {
+  visibility: visible;
+  margin: 0px;
+  font-size: 10px;
+}
+.dfltf  {
+  position: absolute;
+  color: #000000;
+  font-family: 'Times New Roman';
+  font-size: 12px;
+  font-weight: normal;
+  font-style: normal;
+  text-decoration: none;
+}
+form#Oform6 {
+  visibility: visible;
+  margin: 0px;
+  font-size: 10px;
+}
+
+#centered {
+  position: relative;
+  width: 238px;
+  height: 100%;
+  margin: 0px auto 0 auto;
+  text-align: left;
+  padding-left: 1px;
+  cursor: default;
+}
+#Oobj1 {
+  position: absolute;
+  font-size: 10px;
+  z-index: 1;
+  left: 0.00em;
+  top: 0.20em;
+  width: 12.30em;
+  height: 5.60em;
+}
+img#Ggeo1 {
+  width: 100%;
+  height: 100%;
+}
+#Oobj2 {
+  position: absolute;
+  font-size: 10px;
+  z-index: 2;
+  text-align: left;
+  left: 0.20em;
+  top: 6.60em;
+  width: 12.20em;
+  height: 4.50em;
+}
+.txt0 {
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+}
+.bold {font-weight: bold;}
+#Oobj3 {
+  position: absolute;
+  font-size: 10px;
+  z-index: 3;
+  text-align: left;
+  left: 0.10em;
+  top: 10.80em;
+  width: 7.50em;
+  height: 2.00em;
+}
+.txt1 {font-family: Arial, sans-serif;}
+#Oobj4 {
+  position: absolute;
+  font-size: 10px;
+  z-index: 4;
+  text-align: left;
+  left: 0.10em;
+  top: 12.70em;
+  width: 23.50em;
+  height: 6.40em;
+}
+.txt2 {
+  font-family: Arial, sans-serif;
+  color: #0000b0;
+}
+#Oobj5 {
+  position: absolute;
+  font-size: 10px;
+  z-index: 5;
+  text-align: left;
+  left: 0.10em;
+  top: 27.20em;
+  width: 23.40em;
+  height: 4.70em;
+}
+.txt3 {
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+}
+#Oobj8 {
+  position: absolute;
+  font-size: 10px;
+  z-index: 6;
+  left: 0.00em;
+  top: 19.50em;
+  width: 2.10em;
+  height: 2.00em;
+}
+#Gform1 {
+  width: 100%;
+  height: 100%;
+}
+#Oobj10 {
+  position: absolute;
+  font-size: 10px;
+  z-index: 8;
+  left: 3.90em;
+  top: 22.40em;
+  width: 10.00em;
+  height: 3.00em;
+}
+#submit {
+  width: 100%;
+  height: 100%;
+}
+#Oobj9 {
+  position: absolute;
+  font-size: 10px;
+  z-index: 7;
+  text-align: left;
+  left: 1.80em;
+  top: 20.00em;
+  width: 16.70em;
+  height: 1.90em;
+}
+
+}
+-->
+</style>
+</head> 
+
+<script language=javascript>
+
+//Function to get param value from URL. 
+function getQueryVariable(variable) { 
+  var query = window.location.search.substring(1); 
+  var vars = query.split("?"); 
+  for (var i=0;i<vars.length;i++) {
+    var pair = vars[i].split("="); 
+    if (pair[0] == variable) {
+        if (pair[0] == "Qv") {
+            return vars[i].substr(3, vars[i].length);
+        }
+        return pair[1]; 
+    } 
+  } 
+  alert('Query Variable ' + variable + ' not found'); 
+}
+</script>
+
+<script type="text/javascript">
+function check()
+ {
+ if(!document.frmLogin.agree.checked)
+{
+alert("You have to agree to the terms\nand conditions to continue!");
+return false; }
+return true; }
+</script>
+
+<body>
+
+<div id="centered">
+<div id="Oobj1">
+<img id="Ggeo1" src="./logo.png" alt="">
+</div>
+
+<div id="Oobj2">
+<div id="Grtf3" class="dfltt">
+<span class ="txt0"><span class ="bold">WELCOME TO<br>
+LOWE'S</span><br>
+</span></div>
+</div>
+
+<div id="Oobj3">
+<div id="Grtf4" class="dfltt">
+<span class ="txt1"><span class ="bold">Free Wi-Fi</span><br>
+</span></div>
+</div>
+
+<div id="Oobj4">
+<div id="Grtf5" class="dfltt">
+<span class ="txt2"><span class ="bold">Lowe's is pleased to offer complimentary <br>
+Wi-Fi access to our customers while you enjoy your shopping experience in our store.</span><br>
+<br>
+</span></div>
+</div>
+
+<form name="frmLogin" id="frmLogin" action="/cgi-bin/hslogin.cgi" method="POST" onSubmit="return check()">
+<div id="Oobj8">
+   <input size="20" name="f_agree" id="f_agree" type="hidden">
+   <input size="64" name="f_hs_server" id="f_hs_server" type="hidden">
+   <input name="f_Qv" id="f_Qv" type="hidden">
+<input type=checkbox class="dfltf" value=Yes name="agree" >
+</div><div id="Oobj10"><input type="submit" id="submit" class="dfltf" name="submit" value="Connect">
+</div></form>
+
+<div id="Oobj9">
+<div id="Grtf10" class="dfltt">
+<span class ="txt3">&nbsp; I agree to <a href="terms.html">Terms and Conditions</a><br>
+</span></div>
+</div>
+
+<div id="Oobj5">
+<div id="Grtf6" class="dfltt">
+<span class ="txt3">&#0169;&nbsp;2011 Lowe's Companies, Inc. All rights reserved. Lowe's and the gable design are registered trademarks of LF, LLC.<br>
+<br>
+</span></div>
+
+</div>
+
+
+</div>
+
+<script language=javascript>
+var hs_server = "NONE";
+var Qv = "NONE";
+var port = 880;
+var postToUrl = "/cgi-bin/hslogin.cgi";
+hs_server = getQueryVariable("hs_server");
+Qv = getQueryVariable("Qv");
+postToUrl = ":" + port + postToUrl;
+document.getElementById("f_hs_server").value = hs_server
+document.getElementById("f_Qv").value = Qv
+document.getElementById("frmLogin").action = "http://" + hs_server + postToUrl;
+</script>
+
+</body> 
+</html> 
+
+Field[0(Content-Type)] = [text/html]
+Field[1(Accept-Ranges)] = [bytes]
+Field[2(ETag)] = ["3868241531"]
+Field[3(Last-Modified)] = [Tue, 20 Dec 2011 23:46:17 GMT]
+Field[4(Content-Length)] = [9996]
+Field[5(Date)] = [Sun, 06 Oct 2013 21:10:05 GMT]
+Field[6(Server)] = [lighttpd/1.4.29]
+Field[7(X-Android-Sent-Millis)] = [1381093804278]
+Field[8(X-Android-Received-Millis)] = [1381093804283]
+Attempting authorization at [http://custacc.lowesstore.com:880/Store-Guest/agreement.html?hs_server=custacc.lowesstore.com?Qv=it_qpmjdz=Tupsf.Hvftu@bbb_qpmjdz=@dmjfou_njou=2:63:9667@dmjfou_nbd=51.1F.96.3C.1G.5D]
+Error:Unknown Captive portal. Cannot authenticate.
+Internet connection is Blocked by Captive portal
+Internet connection is Blocked by Captive portal
