@@ -130,7 +130,12 @@ public class ParsedHttpInput {
 	}
 	
 	public boolean submitOnLoad() {
-		return htmlPage.getOnLoad().equalsIgnoreCase("document.forms[0].submit();");
+		String onLoad = htmlPage.getOnLoad();
+		if (logger != null)
+			logger.debug("OnLoad = [" + onLoad + "]");
+		return onLoad.equalsIgnoreCase("document.forms[0].submit();")
+				|| onLoad.equalsIgnoreCase("document.form.submit();")
+				|| onLoad.endsWith(".submit();"); // this one is probably enough
 	}
 
 	public final String getHtml() {

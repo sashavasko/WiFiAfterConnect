@@ -17,6 +17,7 @@
 package com.wifiafterconnect;
 
 import java.io.DataOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
@@ -220,6 +221,7 @@ public class WifiAuthenticator {
 		HttpURLConnection conn = null;
 		try {
 			URL postUrl = new URL (url.getProtocol() + "://" + url.getAuthority() + url.getPath());
+			logger.debug("Post URL = [" + postUrl + "]");
 			conn = (HttpURLConnection) postUrl.openConnection();
 			conn.setConnectTimeout(Constants.SOCKET_TIMEOUT_MS);
 			conn.setReadTimeout(Constants.SOCKET_TIMEOUT_MS);
@@ -237,6 +239,10 @@ public class WifiAuthenticator {
 		}catch ( ProtocolException e)
 		{
 			logger.exception (e);
+			return null;
+		}catch (FileNotFoundException e)
+		{
+			logger.debug("Can't read result - FileNotFound exception.");
 			return null;
 		} catch (IOException e) {
 			logger.exception (e);
