@@ -157,4 +157,11 @@ public class ParsedHttpInput {
 	public boolean isKnownCaptivePortal() { 
 		return (captiveHandler != null);
 	}
+
+	public URL getFormPostURL(URL originalUrl) {
+		HtmlForm form = htmlPage.getForm();
+		if (form != null)
+			return form.formatActionURL(originalUrl);
+		return originalUrl;
+	}
 }

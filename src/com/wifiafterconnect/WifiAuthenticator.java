@@ -255,8 +255,10 @@ public class WifiAuthenticator {
 	public boolean attemptAuthorization (URL url, ParsedHttpInput parsedPage, WifiAuthParams authParams) {
 		
 		if (parsedPage.submitOnLoad()) {
-			logger.debug("Handling onLoad submit for [" + url + "]");
-			parsedPage = postForm (url, parsedPage, null);
+			
+			URL postUrl = parsedPage.getFormPostURL(url);
+			logger.debug("Handling pre-auth onLoad submit for [" + url + "], post URL =[" + postUrl+"]");
+			parsedPage = postForm (postUrl, parsedPage, null);
 		}
 		
 		logger.debug("Attempting authorization at [" + url + "]");
@@ -281,8 +283,9 @@ public class WifiAuthenticator {
 		ParsedHttpInput result = postForm (url, parsedPage, authParams);
 		// there could be a bunch of additional automated forms at the end
 		while (result != null && result.submitOnLoad()) {
-			logger.debug("Handling post-auth onLoad submit for [" + url + "]");
-			result = postForm (url, result, null);
+			URL postUrl = result.getFormPostURL(url);
+			logger.debug("Handling post-auth onLoad submit for [" + url + "], post URL =[" + postUrl+"]");
+			result = postForm (postUrl, result, null);
 		}
 		
 		if (result != null) {

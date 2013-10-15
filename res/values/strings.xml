@@ -6,7 +6,7 @@
     <string name="hello_world">Hello world!</string>
     <string name="pref_title_logging">Logging</string>
     <string name="pref_label_log_save_enable">Save each attempt into file</string>
-    <string name="pref_label_log_save_enable_summary">Save log file of each attempt - only usefull for debugging.</string>
+    <string name="pref_label_log_save_enable_summary">Save log file of each attempt - only useful for debugging.</string>
     <string name="pref_label_save_location">Use external SD Card</string>
     <string name="pref_saveLogFileEnable">pref_saveLogFileEnable</string>
     <string name="pref_saveLogDir">pref_saveLogDir</string>
