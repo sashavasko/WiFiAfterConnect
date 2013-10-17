@@ -121,6 +121,7 @@ public class WiNGHandler extends CaptivePageHandler implements CaptivePageHandle
 		form.setInputValue ("f_" + QUERY_VAR_QV, qV); 
 		form.setInputValue ("f_" + QUERY_VAR_HS_SERVER, hsServer);
 		form.setInputValue ("agree", "Yes");
+		form.setInputValue ("f_agree", "Yes");
 	}
 
 }
