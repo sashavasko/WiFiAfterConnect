@@ -63,7 +63,7 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 		// Use the application context, which will ensure that you 
 		// don't accidentally leak an Activity's context.
 		// See this article for more information: http://bit.ly/6LRzfx
-		if (instance == null) {
+		if (instance == null && ctx != null) {
 			instance = new WifiAuthDatabase(ctx.getApplicationContext());
 		}
 		return instance;
@@ -142,16 +142,19 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 	}
 
 	public long updateWifiTable (final String authHost, final ContentValues values) {
-		if (values == null || values.size() == 0 || authHost == null || authHost.isEmpty())
+		if (authHost == null || authHost.isEmpty())
 			return -1;
 		
 		long hostId = getWifiHostId (authHost);
 		SQLiteDatabase db = getDb();
 		if (hostId < 0) {
-			return db.insert(WIFI_TABLE_NAME, null, values);
+			ContentValues valuesInsert = values == null ? new ContentValues() : values;
+			if (!valuesInsert.containsKey(COLUMN_HOSTNAME))
+				valuesInsert.put(COLUMN_HOSTNAME, authHost);
+			return db.insert(WIFI_TABLE_NAME, null, valuesInsert);
 		}
-		
-		db.update(WIFI_TABLE_NAME, values, COLUMN_ID + " = ?", new String[]{Long.toString(hostId)});
+		if (values != null)
+			db.update(WIFI_TABLE_NAME, values, COLUMN_ID + " = ?", new String[]{Long.toString(hostId)});
 		return hostId;
 	}
 
@@ -237,19 +240,22 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 	
 	public void storeAuthParams (final String authHost, final WifiAuthParams params) {
 		if (params != null) {
-			SQLiteDatabase db = getDb();
-			ContentValues values = new ContentValues();
-			
-			long hostId = updateWifiTable (authHost, values);
+			long hostId = updateWifiTable (authHost, null);
+			//Log.d(Constants.TAG, "Saving authParams for host [" + authHost + "], host id = " + hostId + "]");
 
-			values.clear();
-			for (HtmlInput i : params.getFields()) {
-				if (i.matchType ("password") && !params.savePassword)
-					continue;
-				values.put(COLUMN_PARAM_NAME, i.getName());
-				values.put(COLUMN_PARAM_TYPE, i.getType());
-				values.put(COLUMN_PARAM_VALUE, i.getValue());
-				updateAuthParamTable (db, hostId, i.getName(), values);
+			if (hostId >= 0) {
+				SQLiteDatabase db = getDb();
+				
+				for (HtmlInput i : params.getFields()) {
+					//Log.d(Constants.TAG, "Param name=[" + i.getName() + "], value = [" + i.getValue()+ "]");
+					if (!i.matchType ("password") || params.savePassword) {
+						ContentValues values = new ContentValues();
+						values.put(COLUMN_PARAM_NAME, i.getName());
+						values.put(COLUMN_PARAM_TYPE, i.getType());
+						values.put(COLUMN_PARAM_VALUE, i.getValue());
+						updateAuthParamTable (db, hostId, i.getName(), values);
+					}
+				}
 			}
 		}
 	}
