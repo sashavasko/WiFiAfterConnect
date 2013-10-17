@@ -19,6 +19,9 @@ package com.wifiafterconnect;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
 import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -59,6 +62,10 @@ public class URLRedirectChecker {
 			
 	}
 	
+	static {
+		CookieHandler.setDefault (new CookieManager (null, CookiePolicy.ACCEPT_ALL));
+	}
+	
 	public URLRedirectChecker(Logger logger, Context context) {
 		this.logger = logger;
 		this.context = context;
@@ -73,7 +80,7 @@ public class URLRedirectChecker {
 	}
 	
 	public boolean attemptAuthorization (URL url, ParsedHttpInput parsedPage) {
-		WifiAuthenticator auth = new WifiAuthenticator (context, logger);
+		WifiAuthenticator auth = new WifiAuthenticator (context, logger, url);
 		return auth.attemptAuthorization (url, parsedPage, null);
 	}
 	
