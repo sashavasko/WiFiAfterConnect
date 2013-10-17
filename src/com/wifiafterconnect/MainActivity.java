@@ -305,7 +305,7 @@ public class MainActivity extends FragmentActivity implements LoaderCallbacks<Cu
         // Prepare the loader.  Either re-connect with an existing one,
         // or start a new one.
         getSupportLoaderManager().initLoader(0, null, this);
-
+        
         // WE would really like to keep track of connectivity state so that our buttons 
         // reflect the state correctly
         IntentFilter intentFilter = new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE");
@@ -464,7 +464,7 @@ public class MainActivity extends FragmentActivity implements LoaderCallbacks<Cu
 	protected void onResume() {
 		super.onResume();
 		refreshStatusIndicators ();
-		
+		getSupportLoaderManager().restartLoader(0, null, this);
 	}
 
 }
