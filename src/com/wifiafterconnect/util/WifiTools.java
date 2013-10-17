@@ -19,6 +19,7 @@ package com.wifiafterconnect.util;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 
 public class WifiTools {
@@ -106,6 +107,19 @@ public class WifiTools {
 				return wifiMan.isWifiEnabled();
 		}
 		return false;
+	}
+	
+	public static String getSSID(Context context) {
+		if (context != null) {
+			WifiManager wifiMan = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
+			if (wifiMan != null) {
+				WifiInfo info = wifiMan.getConnectionInfo();
+				if (info != null) {
+					return info.getSSID();
+				}
+			}
+		}
+		return null;
 	}
 	
 	public static boolean isWifiConnected (Context context){
