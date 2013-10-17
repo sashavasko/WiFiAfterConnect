@@ -29,6 +29,7 @@ import android.util.Log;
 
 import com.wifiafterconnect.handlers.CaptivePageHandler;
 import com.wifiafterconnect.html.HtmlForm;
+import com.wifiafterconnect.html.HtmlInput;
 import com.wifiafterconnect.html.HtmlPage;
 import com.wifiafterconnect.util.Logger;
 
@@ -163,5 +164,14 @@ public class ParsedHttpInput {
 		if (form != null)
 			return form.formatActionURL(originalUrl);
 		return originalUrl;
+	}
+
+	public String getCookies() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public boolean hasSubmittableForm() {
+		return htmlPage.hasFormWithInputType(HtmlInput.TYPE_SUBMIT);
 	}
 }

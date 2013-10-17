@@ -35,6 +35,7 @@ public class HtmlForm {
 	protected String id;
 	protected String action;
 	protected String method;
+	protected URL actionUrl;
 	protected Map<String, HtmlInput> inputs = new HashMap<String,HtmlInput>();
 	
 	public void addInput (HtmlInput i) {
@@ -45,6 +46,10 @@ public class HtmlForm {
 	HtmlForm (Element e) {
 		id = e.attr("id");
 		action = e.attr("action");
+		try {
+			actionUrl = new URL(action);
+		} catch (MalformedURLException ex) {actionUrl = null;}
+
 		method = e.attr("method");
     	for (Element ie : e.getElementsByTag("input")) {
     		Log.d(Constants.TAG, "Parsing html: form input found : " + ie.toString());
@@ -123,12 +128,33 @@ public class HtmlForm {
 	
 	public URL formatActionURL (URL originalUrl) {
 		URL result = originalUrl;
-		if (!action.isEmpty()) {
+		if (action != null) {
+			String protocol;
+			String authority = null;
+			String file = action;
+			String ref = null;
+			if (actionUrl != null) {
+				protocol = actionUrl.getProtocol();
+				authority = actionUrl.getAuthority();
+				file = actionUrl.getFile();
+				ref = actionUrl.getRef();
+			}else {
+				protocol = originalUrl.getProtocol();
+			}
+			if (authority == null)
+				authority = originalUrl.getAuthority();
+			
+			String urlString = protocol + "://" + authority;
+			if (file != null)
+				urlString += file;
+			if (ref != null)
+				urlString += "#" + ref;
+
 			try {
-				result = new URL (originalUrl.getProtocol() + "://" + originalUrl.getAuthority() + action);
+				result = new URL (urlString);
 			} catch (MalformedURLException e) {	}
 		}else {
-					// TODO need to check for onclick="form.action=" in type="submit" inputs
+			// TODO need to check for onclick="form.action=" in type="submit" inputs
 		}
 		return result;
 	}

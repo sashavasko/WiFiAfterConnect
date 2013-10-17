@@ -35,6 +35,7 @@ public class HtmlPage {
 	private String source = "";
 	private Map<String,HtmlForm> namedForms = new HashMap<String,HtmlForm>();
 	private List<HtmlForm> forms = new ArrayList<HtmlForm>();
+	private List<JavaScript> javaScripts = new ArrayList<JavaScript>();
 	
 	private String onLoad = "";
 	private String metaRefresh = "";
@@ -70,7 +71,7 @@ public class HtmlPage {
 
 		for (Element meta : content.getElementsByTag("meta")) {
 			if (meta.attr("http-equiv").equalsIgnoreCase("refresh")) {
-				metaRefresh = meta.attr("contents");
+				metaRefresh = meta.attr("content");
 				break;
 			}
 		}
@@ -92,7 +93,13 @@ public class HtmlPage {
 				namedForms.put(fid, f);
 		}
 		
-    	for (Element ie : content.getElementsByTag("input")) {
+		for (Element jse : content.getElementsByTag("script")) {
+			JavaScript j = new JavaScript (jse);
+			javaScripts.add (j);
+			Log.d(Constants.TAG, "Parsing html: JS added. javaScripts = " + javaScripts.toString());
+		}
+
+		for (Element ie : content.getElementsByTag("input")) {
     		HtmlInput i = new HtmlInput (ie);
     		String fid = i.getFormId();
     		if (!fid.isEmpty()) {
@@ -154,6 +161,23 @@ public class HtmlPage {
 			url = new URL (metaRefresh.substring(start+4));
 		
 		return url;
+	}
+	
+	public String getDocumentReadyFunc () {
+		String func = null;
+		for (JavaScript js : javaScripts) {
+			if ((func = js.getDocumentReadyFunc()) != null)
+				return func;
+		}
+		return func;
+	} 
+	
+	public boolean hasFormWithInputType (String type) {
+		for (HtmlForm f : forms) {
+			if (f.getVisibleInputByType(type) != null)
+				return true;
+		}
+		return false;
 	}
 
 }
