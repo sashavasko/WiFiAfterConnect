@@ -103,7 +103,7 @@ public class WifiAuthenticatorActivity extends FragmentActivity
 		
 		if (authParams.authAction != action && isAlwaysDoThat()) {
 			authParams.authAction = action;
-			wifiAuth.storeAuthAction(url.getHost(), action);
+			wifiAuth.storeAuthAction(action);
 		}
 		switch (action) {
 			case BROWSER : 
@@ -148,9 +148,9 @@ public class WifiAuthenticatorActivity extends FragmentActivity
   	   	String html = intent.getStringExtra (WifiAuthenticator.OPTION_PAGE);
   	   	logger = new Logger (intent);
   	   	
-  	   	wifiAuth = new WifiAuthenticator (this, logger);
+  	   	wifiAuth = new WifiAuthenticator (this, logger, url);
   	   	parsedPage = new ParsedHttpInput (logger, url, html);
-  	   	authParams = wifiAuth.getStoredAuthParams(url.getHost());
+  	   	authParams = wifiAuth.getStoredAuthParams();
    		authParams = parsedPage.addMissingParams(authParams);
    		
    		fieldsTable = (TableLayout)findViewById(R.id.fieldsTableLayout);
@@ -228,7 +228,7 @@ public class WifiAuthenticatorActivity extends FragmentActivity
     
 	@Override
 	public void saveAction(WifiTools.Action action) {
-		wifiAuth.storeWifiAction (url.getHost(), action);
+		wifiAuth.storeWifiAction (action);
 	}
 
 }

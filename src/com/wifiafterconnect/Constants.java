@@ -34,4 +34,6 @@ public interface Constants {
 	
 	public static final String [] PROTOCOLS = {"http","https"};
 
+	public static final int MAX_AUTOMATED_REQUESTS = 10;
+
 }

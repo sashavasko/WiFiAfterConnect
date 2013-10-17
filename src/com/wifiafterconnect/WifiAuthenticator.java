@@ -20,6 +20,7 @@ import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 
@@ -55,50 +56,57 @@ public class WifiAuthenticator {
 	
 	private Context context;
 	private Logger logger;
+	private String authHost;
 	
-	public WifiAuthenticator (Context context, Logger logger) {
+	public WifiAuthenticator (Context context, Logger logger, URL hostUrl) {
 		this.context = context;
 		this.logger = logger;
-	}
-	
-	private WifiAuthDatabase wifiDb = null;
-	protected boolean checkPrepareDB() {
-		if (context != null) {
-			if (wifiDb == null)
-				wifiDb = WifiAuthDatabase.getInstance(context);
+		authHost = hostUrl.getHost();
+		if (authHost.matches("([0-9]{1,3}\\.){3}[0-9]{1,3}")) // raw IP address - supplement with WiFi SSID
+		{
+			String ssid = WifiTools.getSSID(context);
+			if (ssid != null) {
+				if (ssid.startsWith("\""))
+					ssid = ssid.substring(1, ssid.length()-1);
+				authHost = ssid + ":" + authHost;
+			}
 		}
-		return (wifiDb != null);
 	}
 	
-	public WifiAuthParams getStoredAuthParams(String authHost) {
-		return checkPrepareDB()? wifiDb.getAuthParams (authHost): null;
+	public WifiAuthParams getStoredAuthParams() {
+		WifiAuthDatabase wifiDb = WifiAuthDatabase.getInstance(context);
+		return wifiDb != null ? wifiDb.getAuthParams (authHost): null;
 	}
-	public void storeAuthAction (final String authHost, final AuthAction action) {
-		if (checkPrepareDB())
+	public void storeAuthAction (final AuthAction action) {
+		WifiAuthDatabase wifiDb = WifiAuthDatabase.getInstance(context);
+		if (wifiDb != null)
 			wifiDb.storeAuthAction (authHost, action);
 	}
 
-	public AuthAction getAuthAction (final String authHost) {
-		return checkPrepareDB()? wifiDb.getAuthAction (authHost): null;
+	public AuthAction getAuthAction () {
+		WifiAuthDatabase wifiDb = WifiAuthDatabase.getInstance(context);
+		return wifiDb != null? wifiDb.getAuthAction (authHost): null;
 	}
 
-	public void storeWifiAction (final String authHost, final WifiTools.Action action) {
-		if (checkPrepareDB())
+	public void storeWifiAction (final WifiTools.Action action) {
+		WifiAuthDatabase wifiDb = WifiAuthDatabase.getInstance(context);
+		if (wifiDb != null)
 			wifiDb.storeWifiAction (authHost, action);
 	}
 
-	public WifiTools.Action getWifiAction (final String authHost) {
-		return checkPrepareDB()? wifiDb.getWifiAction (authHost): null;
+	public WifiTools.Action getWifiAction () {
+		WifiAuthDatabase wifiDb = WifiAuthDatabase.getInstance(context);
+		return wifiDb != null? wifiDb.getWifiAction (authHost): null;
 	}
 	
 	public static final String OPTION_URL = "PARAM_URL";
 	public static final String OPTION_PAGE = "PARAM_PAGE";
 	
-	protected void notifyWifiDisabled(String hostname) {
+	protected void notifyWifiDisabled() {
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
 		.setSmallIcon (R.drawable.wifiac_small)//(android.R.drawable.presence_offline)
 		.setContentTitle(context.getString(R.string.notif_wifi_disabled_title))
-		.setContentText(hostname + " - " + context.getString(R.string.notif_wifi_disabled_text));
+		.setContentText(authHost + " - " + context.getString(R.string.notif_wifi_disabled_text));
 		
 		Intent resultIntent = new Intent(context, MainActivity.class);
 		if (SettingsActivity.getReenableWifiQuiet(context))
@@ -188,7 +196,7 @@ public class WifiAuthenticator {
 			
 			if (disableWifiOnLock) {
 				WifiTools.disableWifi(context);
-				notifyWifiDisabled(url.getHost());
+				notifyWifiDisabled();
 			}else {
 				ScreenOnReceiver.register(context);
 				// don't want to receive repeat notifications - will re-enable when screen comes on
@@ -228,6 +236,9 @@ public class WifiAuthenticator {
 			conn.setDoInput(true);
 			conn.setDoOutput(true);
 			conn.setUseCaches(false);
+			String cookies = parsedPage.getCookies();
+			if (cookies != null)
+				conn.setRequestProperty("Cookie", cookies);
 			conn.setRequestMethod("POST");
 			
 			DataOutputStream output = new DataOutputStream (conn.getOutputStream());
@@ -252,6 +263,23 @@ public class WifiAuthenticator {
 		}
 	}
 	
+	public ParsedHttpInput getRefresh (ParsedHttpInput parsedPage) {
+		try {
+			logger.debug("Redirected to [" + parsedPage.getMetaRefreshURL() + "]");
+			HttpURLConnection conn = (HttpURLConnection) parsedPage.getMetaRefreshURL().openConnection();
+			conn.setConnectTimeout(Constants.SOCKET_TIMEOUT_MS);
+			conn.setReadTimeout(Constants.SOCKET_TIMEOUT_MS);
+			conn.setUseCaches(false);
+			return ParsedHttpInput.receive (logger, conn);
+		} catch (MalformedURLException e) {
+			logger.exception(e);
+		} catch (IOException e) {
+			logger.exception(e);
+		}
+		return null;
+	}
+
+	
 	public boolean attemptAuthorization (URL url, ParsedHttpInput parsedPage, WifiAuthParams authParams) {
 		
 		if (parsedPage.submitOnLoad()) {
@@ -267,12 +295,10 @@ public class WifiAuthenticator {
 			return false;
 		}
 
-		String authHost = url.getHost();
 		if (authParams == null) {
-			authParams = getStoredAuthParams(authHost);
+			authParams = getStoredAuthParams();
 
 			if (parsedPage.checkParamsMissing(authParams)){
-				wifiDb = null;
 				requestUserParams (url, parsedPage);
 				// we will have to try authentication directly from user-facing activity
 				return false;
@@ -280,24 +306,36 @@ public class WifiAuthenticator {
 		}	
 		
 		boolean success = false;
-		ParsedHttpInput result = postForm (url, parsedPage, authParams);
+		ParsedHttpInput result = postForm (parsedPage.getFormPostURL(url), parsedPage, authParams);
+		int requestsLeft = Constants.MAX_AUTOMATED_REQUESTS;
 		// there could be a bunch of additional automated forms at the end
-		while (result != null && result.submitOnLoad()) {
-			URL postUrl = result.getFormPostURL(url);
-			logger.debug("Handling post-auth onLoad submit for [" + url + "], post URL =[" + postUrl+"]");
-			result = postForm (postUrl, result, null);
+		while (result != null && --requestsLeft >= 0) {
+			if (result.submitOnLoad() || result.hasSubmittableForm()) {
+				URL postUrl = result.getFormPostURL(url);
+				logger.debug("Handling post-auth onLoad submit for [" + url + "], post URL =[" + postUrl+"]");
+				result = postForm (postUrl, result, null);
+			}else if (result.hasMetaRefresh()) {
+				result = getRefresh (result);
+			}else
+				break;
 		}
 		
 		if (result != null) {
 			logger.debug("Re-checking connection ...");
 			URLRedirectChecker checker = new URLRedirectChecker (logger, context);
 			success = checker.checkHttpConnection (AuthorizationType.None);
-			if (success && wifiDb != null)
-				wifiDb.storeAuthParams(authHost, authParams);
+			if (success) 
+			{
+				WifiAuthDatabase wifiDb = WifiAuthDatabase.getInstance(context);
+				logger.debug("Saving Auth Params. db = [" + wifiDb + "]");
+				if (wifiDb != null)
+					wifiDb.storeAuthParams(authHost, authParams);
+			}
+				
 			if (success && context != null) {
 				cancelWatchdogNotification();
 				try {
-					Toast.makeText(context, context.getText(R.string.success_notification) + " " + url.getHost(), Toast.LENGTH_SHORT).show();
+					Toast.makeText(context, context.getText(R.string.success_notification) + " " + authHost, Toast.LENGTH_SHORT).show();
 				}catch (Throwable e){
 					// don't care
 				}
