@@ -16,6 +16,8 @@
 
 package com.wifiafterconnect;
 
+import java.util.Locale;
+
 import com.wifiafterconnect.WifiAuthenticator.AuthAction;
 import com.wifiafterconnect.html.HtmlInput;
 import com.wifiafterconnect.util.WifiTools;
@@ -174,8 +176,11 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 			return -1;
 
 		long rowId = getAuthParamRowId (db, hostId, name);
-		if (rowId < 0)
+		if (rowId < 0) {
+			if (!values.containsKey(COLUMN_HOST_ID))
+				values.put(COLUMN_HOST_ID, hostId);
 			return db.insert(WIFI_AUTH_PARAMS_TABLE_NAME, null, values);
+		}
 		
 		db.update(WIFI_AUTH_PARAMS_TABLE_NAME, values, COLUMN_ID + " = ?", new String[]{Long.toString(rowId)});
 		return rowId; 
@@ -251,7 +256,7 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 					if (!i.matchType ("password") || params.savePassword) {
 						ContentValues values = new ContentValues();
 						values.put(COLUMN_PARAM_NAME, i.getName());
-						values.put(COLUMN_PARAM_TYPE, i.getType());
+						values.put(COLUMN_PARAM_TYPE, i.getType().toLowerCase(Locale.ENGLISH));
 						values.put(COLUMN_PARAM_VALUE, i.getValue());
 						updateAuthParamTable (db, hostId, i.getName(), values);
 					}
@@ -263,5 +268,14 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 	public void deleteSite (long id) {
 		SQLiteDatabase db = getDb();
 		db.delete (WIFI_TABLE_NAME, COLUMN_ID + " = ?", new String[]{Long.toString(id)});
+	}
+
+	@Override
+	public void onOpen(SQLiteDatabase db) {
+		super.onOpen(db);
+		if (!db.isReadOnly()) {
+	        // Enable foreign key constraints
+	        db.execSQL("PRAGMA foreign_keys=ON;");
+	    }		
 	}
 }
