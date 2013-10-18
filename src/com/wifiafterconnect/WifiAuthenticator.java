@@ -224,6 +224,9 @@ public class WifiAuthenticator {
 		if (postDataString.isEmpty()){
 			logger.error("Failed to compile data for authentication POST");
 			return null;
+		} else if (url == null) {
+			logger.error("Missing URL to POST the form");
+			return null;
 		}
 
 		HttpURLConnection conn = null;
@@ -263,64 +266,88 @@ public class WifiAuthenticator {
 		}
 	}
 	
-	public ParsedHttpInput getRefresh (ParsedHttpInput parsedPage) {
-		try {
-			logger.debug("Redirected to [" + parsedPage.getMetaRefreshURL() + "]");
-			HttpURLConnection conn = (HttpURLConnection) parsedPage.getMetaRefreshURL().openConnection();
-			conn.setConnectTimeout(Constants.SOCKET_TIMEOUT_MS);
-			conn.setReadTimeout(Constants.SOCKET_TIMEOUT_MS);
-			conn.setUseCaches(false);
-			return ParsedHttpInput.receive (logger, conn);
-		} catch (MalformedURLException e) {
-			logger.exception(e);
-		} catch (IOException e) {
-			logger.exception(e);
+	public ParsedHttpInput getRefresh (URL redirectUrl) {
+		logger.debug("Redirected to [" + redirectUrl + "]");
+		if (redirectUrl != null){
+			try {
+				HttpURLConnection conn = (HttpURLConnection) redirectUrl.openConnection();
+				conn.setConnectTimeout(Constants.SOCKET_TIMEOUT_MS);
+				conn.setReadTimeout(Constants.SOCKET_TIMEOUT_MS);
+				conn.setUseCaches(false);
+				return ParsedHttpInput.receive (logger, conn);
+			} catch (IOException e) {
+				logger.exception(e);
+			}
 		}
 		return null;
 	}
 
 	
-	public boolean attemptAuthorization (URL url, ParsedHttpInput parsedPage, WifiAuthParams authParams) {
+	public boolean attemptAuthentication (URL url, ParsedHttpInput parsedPage, WifiAuthParams authParams) {
 		
 		if (parsedPage.submitOnLoad()) {
-			
 			URL postUrl = parsedPage.getFormPostURL(url);
 			logger.debug("Handling pre-auth onLoad submit for [" + url + "], post URL =[" + postUrl+"]");
 			parsedPage = postForm (postUrl, parsedPage, null);
 		}
 		
-		logger.debug("Attempting authorization at [" + url + "]");
-		if (!parsedPage.isKnownCaptivePortal()) {
-			logger.error("Unknown Captive portal. Cannot authenticate.");
-			return false;
-		}
-
-		if (authParams == null) {
-			authParams = getStoredAuthParams();
-
-			if (parsedPage.checkParamsMissing(authParams)){
-				requestUserParams (url, parsedPage);
-				// we will have to try authentication directly from user-facing activity
+		boolean success = false;
+		if (!parsedPage.hasForm()) {
+			URL switchUrl = null;
+			// Target wifi has this, maybe others do too.
+			String switchUrlStr = parsedPage.getUrlQueryVar("switch_url");
+			if (switchUrlStr == null)
+				return false;
+			try {
+				switchUrl = new URL(switchUrlStr);
+			}catch (MalformedURLException e) {
+				logger.equals("Malformed refresh url = [" + switchUrlStr + "]");
 				return false;
 			}
-		}	
-		
-		boolean success = false;
-		ParsedHttpInput result = postForm (parsedPage.getFormPostURL(url), parsedPage, authParams);
-		int requestsLeft = Constants.MAX_AUTOMATED_REQUESTS;
-		// there could be a bunch of additional automated forms at the end
-		while (result != null && --requestsLeft >= 0) {
-			if (result.submitOnLoad() || result.hasSubmittableForm()) {
-				URL postUrl = result.getFormPostURL(url);
-				logger.debug("Handling post-auth onLoad submit for [" + url + "], post URL =[" + postUrl+"]");
-				result = postForm (postUrl, result, null);
-			}else if (result.hasMetaRefresh()) {
-				result = getRefresh (result);
-			}else
-				break;
+			if ((parsedPage = getRefresh (switchUrl)) != null)
+				success = !parsedPage.hasForm(); // this could be all we ever needed
 		}
 		
-		if (result != null) {
+		if (!success) {
+			logger.debug("Attempting authentication at [" + url + "]");
+			if (!parsedPage.isKnownCaptivePortal()) {
+				logger.error("Unknown Captive portal. Cannot authenticate.");
+				return false;
+			}
+
+			if (authParams == null) {
+				authParams = getStoredAuthParams();
+
+				if (parsedPage.checkParamsMissing(authParams)){
+					requestUserParams (url, parsedPage);
+					// we will have to try authentication directly from user-facing activity
+					return false;
+				}
+			}	
+
+			ParsedHttpInput result = postForm (parsedPage.getFormPostURL(url), parsedPage, authParams);
+
+			int requestsLeft = Constants.MAX_AUTOMATED_REQUESTS;
+			// there could be a bunch of additional automated forms at the end
+			while (result != null && --requestsLeft >= 0) {
+				if (result.submitOnLoad() || result.hasSubmittableForm()) {
+					URL postUrl = result.getFormPostURL(url);
+					logger.debug("Handling post-auth onLoad submit for [" + url + "], post URL =[" + postUrl+"]");
+					result = postForm (postUrl, result, null);
+				}else if (result.hasMetaRefresh()) {
+					try {
+						result = getRefresh (result.getMetaRefreshURL());
+					}catch (MalformedURLException e) {
+						logger.exception(e);
+						break;
+					}
+				}else
+					break;
+			}
+			success = (result != null);
+		}
+		
+		if (success) {
 			logger.debug("Re-checking connection ...");
 			URLRedirectChecker checker = new URLRedirectChecker (logger, context);
 			success = checker.checkHttpConnection (AuthorizationType.None);

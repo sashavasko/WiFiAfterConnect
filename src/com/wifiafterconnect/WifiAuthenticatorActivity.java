@@ -64,7 +64,7 @@ public class WifiAuthenticatorActivity extends FragmentActivity
 
 		@Override
 		protected Boolean doInBackground(Void... params) {
-			Boolean result = wifiAuth.attemptAuthorization(url, parsedPage, authParams);
+			Boolean result = wifiAuth.attemptAuthentication(url, parsedPage, authParams);
 			return result;
 		}
 		

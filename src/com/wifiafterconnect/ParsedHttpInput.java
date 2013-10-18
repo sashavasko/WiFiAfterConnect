@@ -174,4 +174,14 @@ public class ParsedHttpInput {
 	public boolean hasSubmittableForm() {
 		return htmlPage.hasFormWithInputType(HtmlInput.TYPE_SUBMIT);
 	}
+
+	public boolean hasForm() {
+		return (htmlPage.getForm() != null);
+	}
+	
+	public String getUrlQueryVar(String varName) {
+		return htmlPage.getUrlQueryVar(varName);
+	}
+
+	
 }

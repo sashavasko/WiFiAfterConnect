@@ -81,7 +81,7 @@ public class URLRedirectChecker {
 	
 	public boolean attemptAuthorization (URL url, ParsedHttpInput parsedPage) {
 		WifiAuthenticator auth = new WifiAuthenticator (context, logger, url);
-		return auth.attemptAuthorization (url, parsedPage, null);
+		return auth.attemptAuthentication (url, parsedPage, null);
 	}
 	
 
