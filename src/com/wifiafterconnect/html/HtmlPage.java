@@ -15,12 +15,15 @@
  */
 package com.wifiafterconnect.html;
 
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.jsoup.Jsoup;
@@ -49,7 +52,19 @@ public class HtmlPage {
 	public URL getUrl () {
 		return url;
 	}
-	
+
+	public String getUrlQueryVar (String varName) {
+		varName += "=";
+		for (String v : url.getQuery().split("[&]")) {
+			if (v.startsWith(varName)) {
+				try {
+					return URLDecoder.decode(v.substring(varName.length()),"UTF-8");
+				} catch (UnsupportedEncodingException e) {}
+			}
+		}
+		return null;
+	}
+
 	public boolean parse (String html) {
 		this.source = html;
 		
@@ -156,7 +171,9 @@ public class HtmlPage {
 			return null;
 		
 		URL url = null;
-		int start = metaRefresh.indexOf("url=");
+
+		// url= token could be upper/mixed case:
+		int start = metaRefresh.toLowerCase(Locale.ENGLISH).indexOf("url=");
 		if (start >= 0)
 			url = new URL (metaRefresh.substring(start+4));
 		
