@@ -30,6 +30,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import android.annotation.SuppressLint;
 import android.util.Log;
 
 import com.wifiafterconnect.Constants;
@@ -42,6 +43,7 @@ public class HtmlPage {
 	
 	private String onLoad = "";
 	private String metaRefresh = "";
+	private String title = "";
 	
 	private URL url = null;
 	
@@ -51,6 +53,10 @@ public class HtmlPage {
 	
 	public URL getUrl () {
 		return url;
+	}
+
+	public String getTitle () {
+		return title;
 	}
 
 	public String getUrlQueryVar (String varName) {
@@ -91,6 +97,12 @@ public class HtmlPage {
 			}
 		}
 
+		for (Element te : content.getElementsByTag("title")) {
+			title = te.data();
+			if (!title.isEmpty())
+				break;
+		}
+		
 		for (Element body : content.getElementsByTag("body")) {
 			Log.d(Constants.TAG, "Parsing html: body found.");
 			if (body.hasAttr("onLoad")) {
@@ -166,7 +178,7 @@ public class HtmlPage {
 		return !metaRefresh.isEmpty();
 	}
 	
-	public URL getMetaRefreshURL () throws MalformedURLException {
+	@SuppressLint("DefaultLocale") public URL getMetaRefreshURL () throws MalformedURLException {
 		if (metaRefresh.isEmpty())
 			return null;
 		

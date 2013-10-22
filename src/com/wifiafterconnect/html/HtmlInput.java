@@ -124,7 +124,11 @@ public class HtmlInput {
 	public StringBuilder formatPostData (StringBuilder postData) {
 		// TODO: Using URLEncoder is probably less efficient then UriBuilder
 		try {
-			postData.append(name).append('=').append(URLEncoder.encode(value,"UTF-8"));
+			if (matchType (HtmlInput.TYPE_IMAGE)) {
+				postData.append("x").append('=').append("1");
+				postData.append("y").append('=').append("1");
+			}else
+				postData.append(name).append('=').append(URLEncoder.encode(value,"UTF-8"));
 		} catch (UnsupportedEncodingException e) {
 			// should never get here
 		}

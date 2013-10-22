@@ -136,6 +136,7 @@ public class HtmlForm {
 			if (actionUrl != null) {
 				protocol = actionUrl.getProtocol();
 				authority = actionUrl.getAuthority();
+				// we want to keep the query in as some portals use query params in post requests
 				file = actionUrl.getFile();
 				ref = actionUrl.getRef();
 			}else {
