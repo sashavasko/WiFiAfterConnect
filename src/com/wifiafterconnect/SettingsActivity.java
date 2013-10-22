@@ -16,16 +16,10 @@
 
 package com.wifiafterconnect;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import android.annotation.TargetApi;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
@@ -59,30 +53,6 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
 		PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
 	}
 
-	public static boolean getSaveLogToFile (Context context) {
-		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-		return sharedPrefs.getBoolean ("pref_saveLogFileEnable", false);
-	}
-	
-	public static File getSaveLogLocation (Context context) {
-		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-		if (sharedPrefs.getBoolean ("pref_saveLogDir", true) 
-				&&	Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-			return context.getExternalFilesDir(null);
-		}
-		return context.getFilesDir();
-	}
-	
-	public static boolean getAutoDisableWifi (Context context) {
-		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-		return sharedPrefs.getBoolean ("pref_AutoDisableWifi", true);
-	}
-	
-	public static boolean getReenableWifiQuiet (Context context) {
-		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-		return sharedPrefs.getBoolean ("pref_ReenableWifiQuiet", true);
-	}
-
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPrefs, String key) {
 		if (key.equals(getString(R.string.pref_EnableBackgroundAuth))) {
@@ -90,29 +60,4 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
 		}
 	}
 	
-	public static URL getUrlToCheckHttp  (Context context) {
-		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-		URL url = null;
-		try {
-			url = new URL(sharedPrefs.getString ("pref_URLToCheckHTTP", Constants.URL_TO_CHECK_HTTP));
-		} catch (MalformedURLException e) {
-			try {
-				url = new URL(Constants.URL_TO_CHECK_HTTP);
-			} catch (MalformedURLException e1) {} // should never happen
-		}
-		return url;
-	} 
-
-	public static URL getUrlToCheckHttps  (Context context) {
-		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-		URL url = null;
-		try {
-			url = new URL(sharedPrefs.getString ("pref_URLToCheckHTTPS", Constants.URL_TO_CHECK_HTTPS));
-		} catch (MalformedURLException e) {
-			try {
-				url = new URL(Constants.URL_TO_CHECK_HTTPS);
-			} catch (MalformedURLException e1) {} // should never happen
-		}
-		return url;
-	} 
 }
