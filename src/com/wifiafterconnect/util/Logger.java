@@ -96,11 +96,5 @@ public class Logger {
 			intent.putExtra(OPTION_LOGGER_FILE, file.getAbsolutePath());
 	}
 	
-	public class Loggable {
-		protected Logger logger;
-		public Loggable (Logger logger) {
-			this.logger = logger;
-		}
-	}
 	
 }
