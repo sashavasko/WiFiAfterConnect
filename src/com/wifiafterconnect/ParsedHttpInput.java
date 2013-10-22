@@ -18,11 +18,14 @@ package com.wifiafterconnect;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 
 import android.util.Log;
@@ -31,80 +34,37 @@ import com.wifiafterconnect.handlers.CaptivePageHandler;
 import com.wifiafterconnect.html.HtmlForm;
 import com.wifiafterconnect.html.HtmlInput;
 import com.wifiafterconnect.html.HtmlPage;
-import com.wifiafterconnect.util.Logger;
+import com.wifiafterconnect.util.Worker;
 
-public class ParsedHttpInput {
+public class ParsedHttpInput extends Worker{
 
-	private Logger logger;
 	private CaptivePageHandler captiveHandler = null;
 	private HtmlPage htmlPage;
 
-	public ParsedHttpInput (Logger logger, URL url, String html) {
-		this.logger = logger;
+	public ParsedHttpInput (Worker other, URL url, String html) {
+		super (other);
 		parse (url, html);
 	}
 
-	public static ParsedHttpInput receive (Logger logger, HttpURLConnection conn) {
-		ParsedHttpInput parsed = null;
-		int totalBytesIn = 0;
-		try {
-			InputStream in = null;
-			in = new BufferedInputStream(conn.getInputStream());
-
-			BufferedReader r = new BufferedReader(new InputStreamReader(in));
-			StringBuilder total = new StringBuilder();
-			char []buffer = new char[4096];
-			int bytesIn;
-			while ((bytesIn = r.read(buffer, 0, 4096)) >= 0) {
-				if (bytesIn > 0) {
-					total.append(buffer, 0, bytesIn);
-					totalBytesIn += bytesIn;
-				}
-			}
-			parsed = new ParsedHttpInput(logger, conn.getURL(), total.toString());
-		}catch (IOException e) {
-			logger.error ("Failed to receive from " + conn.toString());
-			logger.exception (e);
-		} catch (Throwable e) {
-			logger.exception (e);
-		}
-		if (parsed != null) {
-			logger.debug("Read " + totalBytesIn + " bytes:");
-			logger.debug (parsed.getHtml());
-	    
-			int pos = 0;
-			String field = null;
-			do {
-				field = conn.getHeaderField(pos);
-				if (field != null) {
-					logger.debug("Field["+pos+"("+conn.getHeaderFieldKey(pos)+")] = [" + field + "]");
-				}
-				++pos;
-			}while (field != null);
-		}
-	    return parsed;
-	}
-	
 	public void parse(URL url, String html) {
-		
 		htmlPage = new HtmlPage(url);
 		if (!html.isEmpty()) {
 			if (!htmlPage.parse (html)) {
-				if (logger != null)
-					logger.error("Failed to parse the page - no document found");
+				error("Failed to parse the page - no document found");
 				return;
 			}
 
 			if (!submitOnLoad()) {
 				// Probably the actual login page
 				captiveHandler = CaptivePageHandler.autodetect (htmlPage);
-				if (logger != null && captiveHandler != null)
-					logger.debug("Detected Captive portal "+ captiveHandler);
+				if (captiveHandler != null)
+					debug("Detected Captive portal "+ captiveHandler);
 			}
 		}else {
 			captiveHandler = null;
 		}
 	}
+
 	public String buildPostData (final WifiAuthParams authParams) {
 		if (captiveHandler != null)
 			return captiveHandler.getPostData(authParams);
@@ -129,11 +89,32 @@ public class ParsedHttpInput {
 			return captiveHandler.addMissingParams(params);
 		return null;
 	}
+
+	public ParsedHttpInput handleAutoRedirects (int maxRequests) {
+		ParsedHttpInput result = this;
+
+		while (result != null && --maxRequests >= 0) {
+			if (result.submitOnLoad() || result.hasSubmittableForm()) {
+				debug("Handling onLoad submit ...");
+				result = result.postForm (null);
+			}else if (result.hasMetaRefresh()) {
+				debug("Handling meta refresh ...");
+				result = result.getRefresh ();
+			}else
+				break;
+		}
+		return result;
+	}
+	
+	public boolean authenticateCaptivePortal(WifiAuthParams authParams) {
+		if (captiveHandler != null)
+			return (captiveHandler.authenticate (this, authParams) != null);
+		return false;
+	}
 	
 	public boolean submitOnLoad() {
 		String onLoad = htmlPage.getOnLoad();
-		if (logger != null)
-			logger.debug("OnLoad = [" + onLoad + "]");
+		debug("OnLoad = [" + onLoad + "]");
 		return onLoad.equalsIgnoreCase("document.forms[0].submit();")
 				|| onLoad.equalsIgnoreCase("document.form.submit();")
 				|| onLoad.endsWith(".submit();"); // this one is probably enough
@@ -159,11 +140,11 @@ public class ParsedHttpInput {
 		return (captiveHandler != null);
 	}
 
-	public URL getFormPostURL(URL originalUrl) {
+	public URL getFormPostURL() {
 		HtmlForm form = htmlPage.getForm();
 		if (form != null)
-			return form.formatActionURL(originalUrl);
-		return originalUrl;
+			return form.formatActionURL(htmlPage.getUrl());
+		return htmlPage.getUrl();
 	}
 
 	public String getCookies() {
@@ -183,5 +164,129 @@ public class ParsedHttpInput {
 		return htmlPage.getUrlQueryVar(varName);
 	}
 
+	public ParsedHttpInput postForm (WifiAuthParams authParams) {
+
+		URL url = getFormPostURL();
+		String postDataString = buildPostData(authParams);
+		String cookies = getCookies();
+		
+		return post (this, url, postDataString, cookies);
+	}
 	
+	public ParsedHttpInput getRefresh () {
+		ParsedHttpInput result = null;
+		try {
+			result = get (this, getMetaRefreshURL());
+		} catch (MalformedURLException e) {
+			exception (e);
+		}
+		
+		return result;
+	}
+
+	public static ParsedHttpInput post (Worker context, URL url, String postDataString, String cookies) {
+		context.debug("POST to url [" + url + "], data to post:["+postDataString+"]");
+		if (postDataString == null || postDataString.isEmpty()){
+			context.error("Failed to compile data for authentication POST");
+			return null;
+		} else if (url == null) {
+			context.error("Missing URL to POST the form");
+			return null;
+		}
+
+		HttpURLConnection conn = null;
+		try {
+			//apparently there are weird captive portals making use of query args on post requests
+			//URL postUrl = new URL (url.getProtocol() + "://" + url.getAuthority() + url.getPath());
+			URL postUrl = url;
+			context.debug("Post URL = [" + postUrl + "]");
+			conn = (HttpURLConnection) postUrl.openConnection();
+			conn.setConnectTimeout(Constants.SOCKET_TIMEOUT_MS);
+			conn.setReadTimeout(Constants.SOCKET_TIMEOUT_MS);
+			conn.setDoInput(true);
+			conn.setDoOutput(true);
+			conn.setUseCaches(false);
+			if (cookies != null)
+				conn.setRequestProperty("Cookie", cookies);
+			conn.setRequestMethod("POST");
+			
+			DataOutputStream output = new DataOutputStream (conn.getOutputStream());
+			output.writeBytes(postDataString);
+			output.flush();
+			output.close();
+			context.debug("Data posted, checking result ...");
+			return receive(context, conn);
+		}catch ( ProtocolException e)
+		{
+			context.exception (e);
+			return null;
+		}catch (FileNotFoundException e)
+		{
+			context.debug("Can't read result - FileNotFound exception.");
+			return null;
+		} catch (IOException e) {
+			context.exception (e);
+			return null;
+		}finally {
+			conn.disconnect();
+		}
+	}
+	
+	public static ParsedHttpInput get (Worker context, URL url) {
+		context.debug("Getting [" + url + "]");
+		if (url != null){
+			try {
+				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+				conn.setConnectTimeout(Constants.SOCKET_TIMEOUT_MS);
+				conn.setReadTimeout(Constants.SOCKET_TIMEOUT_MS);
+				conn.setUseCaches(false);
+				return receive (context, conn);
+			} catch (IOException e) {
+				context.exception(e);
+			}
+		}
+		return null;
+	}
+
+	public static ParsedHttpInput receive (Worker creator, HttpURLConnection conn) {
+		ParsedHttpInput parsed = null;
+		int totalBytesIn = 0;
+		try {
+			InputStream in = null;
+			in = new BufferedInputStream(conn.getInputStream());
+
+			BufferedReader r = new BufferedReader(new InputStreamReader(in));
+			StringBuilder total = new StringBuilder();
+			char []buffer = new char[4096];
+			int bytesIn;
+			while ((bytesIn = r.read(buffer, 0, 4096)) >= 0) {
+				if (bytesIn > 0) {
+					total.append(buffer, 0, bytesIn);
+					totalBytesIn += bytesIn;
+				}
+			}
+			parsed = new ParsedHttpInput(creator, conn.getURL(), total.toString());
+		}catch (IOException e) {
+			creator.error ("Failed to receive from " + conn.toString());
+			creator.exception (e);
+		} catch (Throwable e) {
+			creator.exception (e);
+		}
+		if (parsed != null) {
+			creator.debug("Read " + totalBytesIn + " bytes:");
+			creator.debug (parsed.getHtml());
+	    
+			int pos = 0;
+			String field = null;
+			do {
+				field = conn.getHeaderField(pos);
+				if (field != null) {
+					creator.debug("Field["+pos+"("+conn.getHeaderFieldKey(pos)+")] = [" + field + "]");
+				}
+				++pos;
+			}while (field != null);
+		}
+	    return parsed;
+	}
+
 }

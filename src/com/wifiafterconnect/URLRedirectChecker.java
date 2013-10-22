@@ -16,8 +16,6 @@
 
 package com.wifiafterconnect;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
@@ -30,10 +28,11 @@ import java.net.URL;
 import java.net.UnknownHostException;
 
 import com.wifiafterconnect.util.Logger;
+import com.wifiafterconnect.util.Worker;
 
 import android.content.Context;
 
-public class URLRedirectChecker {
+public class URLRedirectChecker extends Worker{
 	private URL urlToCheckHttp;
 	@SuppressWarnings("unused")
 	private URL urlToCheckHttps;
@@ -44,22 +43,18 @@ public class URLRedirectChecker {
 	
 	public AuthorizationType defaultType = AuthorizationType.IfNeeded;
 	
-	private Context context = null;
-	private Logger logger;
-	
 	private void InitUrls () {
-		if (context == null) {
+		if (getContext() == null) {
 			try {
 				urlToCheckHttp = new URL(Constants.URL_TO_CHECK_HTTP);
 				urlToCheckHttps = new URL(Constants.URL_TO_CHECK_HTTPS);
 			} catch (MalformedURLException e) {
-				logger.exception (e);
+				exception (e);
 			}
 		}else {
-			urlToCheckHttp = SettingsActivity.getUrlToCheckHttp(context);
-			urlToCheckHttps = SettingsActivity.getUrlToCheckHttps(context);
+			urlToCheckHttp = prefs.getUrlToCheckHttp();
+			urlToCheckHttps = prefs.getUrlToCheckHttps();
 		}
-			
 	}
 	
 	static {
@@ -67,35 +62,28 @@ public class URLRedirectChecker {
 	}
 	
 	public URLRedirectChecker(Logger logger, Context context) {
-		this.logger = logger;
-		this.context = context;
-		
+		super (logger, context);
 		InitUrls ();
 	}
 	
 	public URLRedirectChecker(String tag, Context context) {
-		this.logger = new Logger (tag == null ? "URLRedirectChecker" : tag);
-		this.context = context;
+		super (new Logger (tag == null ? "URLRedirectChecker" : tag), context);
+		InitUrls ();
+	}
+	
+	public URLRedirectChecker(Worker creator) {
+		super (creator);
 		InitUrls ();
 	}
 	
 	public boolean attemptAuthorization (URL url, ParsedHttpInput parsedPage) {
-		WifiAuthenticator auth = new WifiAuthenticator (context, logger, url);
-		return auth.attemptAuthentication (url, parsedPage, null);
+		WifiAuthenticator auth = new WifiAuthenticator (this, url);
+		return auth.attemptAuthentication (parsedPage, null);
 	}
 	
 
 	public void setSaveLogFile (URL url) {
-		if (SettingsActivity.getSaveLogToFile(context)) {
-			File saveDir = SettingsActivity.getSaveLogLocation(context);
-			try {
-				logger.setLogFile(new File (saveDir, (url == null ? "probing" : url.getHost()) + ".log"));
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+		setLogFileName ((url == null ? "probing" : url.getHost()) + ".log");
 	}
 	
 	/* ###################################################### 
@@ -168,7 +156,7 @@ public class URLRedirectChecker {
 		try {
 			
 			//URL url = new URL(protocol + "://www.google.com");
-			logger.debug("Trying [" + url + "]");
+			debug("Trying [" + url + "]");
 			ParsedHttpInput parsed = null;
 			
 			// due to switching to wifi, name resolution can fail if the timing in just right,
@@ -179,7 +167,7 @@ public class URLRedirectChecker {
 				conn.setReadTimeout(Constants.SOCKET_TIMEOUT_MS);
 				conn.setUseCaches(false);
 
-				if ((parsed = ParsedHttpInput.receive (logger, conn)) == null) {
+				if ((parsed = ParsedHttpInput.receive (this, conn)) == null) {
 					try {	Thread.sleep(100); } catch (InterruptedException e) {} // don't care
 				}
 			}
@@ -193,7 +181,7 @@ public class URLRedirectChecker {
 		    	success = attemptAuthorization (conn.getURL(), parsed);
 		    }else if (!url.getHost().equals(conn.getURL().getHost())) {
 		        // we were redirected! Kick the user out to the browser to sign on?
-		    	logger.debug("Redirected to  [" + conn.getURL() + "]");
+		    	debug("Redirected to  [" + conn.getURL() + "]");
 		    	if (doAuthorize != AuthorizationType.None) {
 		    		setSaveLogFile (conn.getURL());
 		    		success = attemptAuthorization (conn.getURL(), parsed);
@@ -207,23 +195,23 @@ public class URLRedirectChecker {
 
 		    if (redirectUrl != null) {
 		    	if (!redirectUrl.getHost().equals(conn.getURL().getHost())) {
-		    		logger.debug("Redirected to  [" + redirectUrl + "]. Explicit handling needed.");
+		    		debug("Redirected to  [" + redirectUrl + "]. Explicit handling needed.");
 		    		setSaveLogFile (redirectUrl);
 		    		if (!redirectUrl.getProtocol().equals(url.getProtocol())) {
-		    			logger.debug("protocol has changed!");
+		    			debug("protocol has changed!");
 		    		}
 		    		if (doAuthorize != AuthorizationType.None)
 		    			success = checkHttpConnection (redirectUrl, AuthorizationType.Force);
 		    	} else {
 			    	// something wicked happened otherwise
-		    		logger.error("Unexpected redirect URL  [" + redirectUrl + "] - giving up.");
+		    		error("Unexpected redirect URL  [" + redirectUrl + "] - giving up.");
 		    	}
 		    }
 		} catch (MalformedURLException e){
-    		logger.error("Redirected to a malformed url ");
-    		logger.exception (e);
+    		error("Redirected to a malformed url ");
+    		exception (e);
 		} catch (IOException e) {
-			logger.exception (e);
+			exception (e);
     	} finally {
 			if (conn != null)
 				conn.disconnect();
@@ -238,13 +226,13 @@ public class URLRedirectChecker {
 	
 	public boolean checkHttpConnection () {
 		boolean success = checkHttpConnection (urlToCheckHttp, defaultType);
-		logger.debug("Internet connection is " + (success ? "Available" : "Blocked by Captive portal"));
+		debug("Internet connection is " + (success ? "Available" : "Blocked by Captive portal"));
 		return success;
 	}
 
 	public boolean checkHttpConnection (AuthorizationType authType) {
 		boolean success = checkHttpConnection (urlToCheckHttp, authType);
-		logger.debug("Internet connection is " + (success ? "Available" : "Blocked by Captive portal"));
+		debug("Internet connection is " + (success ? "Available" : "Blocked by Captive portal"));
 		return success;
 	}
 	

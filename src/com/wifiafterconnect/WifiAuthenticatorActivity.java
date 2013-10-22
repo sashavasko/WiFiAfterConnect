@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import com.wifiafterconnect.html.HtmlInput;
 import com.wifiafterconnect.util.Logger;
 import com.wifiafterconnect.util.WifiTools;
+import com.wifiafterconnect.util.Worker;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -47,8 +48,6 @@ import android.widget.Toast;
 public class WifiAuthenticatorActivity extends FragmentActivity 
 										implements DisableWifiDialogFragment.DisableWifiDialogListener {
 
-	private Logger logger = null;
-  	   	
 	private URL url = null;
    	private WifiAuthenticator wifiAuth = null;
    	private WifiAuthParams authParams = null;
@@ -64,7 +63,7 @@ public class WifiAuthenticatorActivity extends FragmentActivity
 
 		@Override
 		protected Boolean doInBackground(Void... params) {
-			Boolean result = wifiAuth.attemptAuthentication(url, parsedPage, authParams);
+			Boolean result = wifiAuth.attemptAuthentication(parsedPage, authParams);
 			return result;
 		}
 		
@@ -146,10 +145,9 @@ public class WifiAuthenticatorActivity extends FragmentActivity
 			// TODO
 		}
   	   	String html = intent.getStringExtra (WifiAuthenticator.OPTION_PAGE);
-  	   	logger = new Logger (intent);
   	   	
-  	   	wifiAuth = new WifiAuthenticator (this, logger, url);
-  	   	parsedPage = new ParsedHttpInput (logger, url, html);
+  	   	wifiAuth = new WifiAuthenticator (new Worker (new Logger (intent), this), url);
+  	   	parsedPage = new ParsedHttpInput (wifiAuth, url, html);
   	   	authParams = wifiAuth.getStoredAuthParams();
    		authParams = parsedPage.addMissingParams(authParams);
    		

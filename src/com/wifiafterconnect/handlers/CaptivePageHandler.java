@@ -20,6 +20,7 @@ import java.net.URL;
 import java.util.HashMap;
 
 import com.wifiafterconnect.Constants;
+import com.wifiafterconnect.ParsedHttpInput;
 import com.wifiafterconnect.WifiAuthParams;
 
 import android.util.Log;
@@ -42,6 +43,7 @@ public abstract class CaptivePageHandler {
 		"CiscoHandler",
 		"UniFiHandler",
 		"WanderingWifiHandler",
+//		"AttHandler", Can be handled by GenericHandler
 		"WiNGHandler"
 	};
 
@@ -81,19 +83,20 @@ public abstract class CaptivePageHandler {
 		
 		if (registeredHandlers == null)
 			registerStandardHandlers();
+
+		CaptivePageHandler handler = null;
 		
 		for (Class<? extends Detection> handlerClass : registeredHandlers.values()) {
 			try {
-				CaptivePageHandler handler = (CaptivePageHandler) handlerClass.newInstance();
+				handler = (CaptivePageHandler) handlerClass.newInstance();
 				//Method m = handlerClass.getMethod("detect", HtmlPage.class);
 				//Boolean result = (Boolean)m.invoke(handler, page);
 				Detection d = (Detection)handler;
 				Boolean result = d.detect(page);
 				Log.d(Constants.TAG, "detecting " + handlerClass.getName() + " result = " + result);
-				if (result) {
-					handler.setPage(page);
-					return handler;
-				}
+				if (result)
+					break;
+				handler = null;
 //			} catch (NoSuchMethodException e) { e.printStackTrace();
 			} catch (InstantiationException e) {
 				e.printStackTrace();
@@ -107,7 +110,11 @@ public abstract class CaptivePageHandler {
 			} catch (NullPointerException e) { // ignore
 			}
 		}
-		return null;
+		if (handler == null)
+			handler = new GenericHandler();
+
+		handler.setPage(page);
+		return handler;
 	}
 	
 	
@@ -122,6 +129,7 @@ public abstract class CaptivePageHandler {
 	
 	public String getPostData (WifiAuthParams params) {
 		HtmlForm form = getLoginForm();
+		Log.d (Constants.TAG, "LoginForm = " + form);
 		if (form != null) {
 			form.fillInputs(params);
 			validateLoginForm (params, form);
@@ -131,6 +139,7 @@ public abstract class CaptivePageHandler {
 	}
 
 	public HtmlForm getLoginForm () {
+		Log.d (Constants.TAG, "Page = " + page);
 		return page != null ? page.getForm() : null;
 	}
 	
@@ -156,6 +165,12 @@ public abstract class CaptivePageHandler {
 		if (form != null) 
 			params = form.fillParams (params);
 		return params;
+	}
+
+	public ParsedHttpInput authenticate(ParsedHttpInput parsedPage,	WifiAuthParams authParams) {
+		// this works for most captive portals. The weird ones should override this method.
+		ParsedHttpInput result = parsedPage.postForm (authParams);
+		return result;
 	}
 	
 }

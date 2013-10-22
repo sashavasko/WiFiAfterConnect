@@ -15,6 +15,8 @@
  */
 package com.wifiafterconnect.handlers;
 
+import com.wifiafterconnect.Constants;
+import com.wifiafterconnect.ParsedHttpInput;
 import com.wifiafterconnect.WifiAuthParams;
 import com.wifiafterconnect.html.HtmlForm;
 import com.wifiafterconnect.html.HtmlPage;
@@ -42,6 +44,19 @@ public class WanderingWifiHandler extends CaptivePageHandler implements CaptiveP
 	public void validateLoginForm(WifiAuthParams params, HtmlForm form) {
 		// TODO need to check onClick script for the Login Button
 		form.setInputValue ("Action", "Login"); 
+	}
+
+	@Override
+	public ParsedHttpInput authenticate(ParsedHttpInput parsedPage,
+			WifiAuthParams authParams) {
+		ParsedHttpInput result = super.authenticate(parsedPage, authParams);
+
+		// Wandering WiFi is nuts. It has Several!!! automated pages at the end of authentication, 
+		// using a mix of redirecting methods.
+		if (result != null)
+			result = result.handleAutoRedirects(Constants.MAX_AUTOMATED_REQUESTS);
+
+		return result;
 	}
 
 }
