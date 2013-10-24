@@ -19,6 +19,7 @@ package com.wifiafterconnect.handlers;
 import com.wifiafterconnect.WifiAuthParams;
 import com.wifiafterconnect.html.HtmlForm;
 import com.wifiafterconnect.html.HtmlPage;
+import com.wifiafterconnect.util.HttpInput;
 
 public class UniFiHandler extends CaptivePageHandler implements CaptivePageHandler.Detection{
 
@@ -39,13 +40,13 @@ public class UniFiHandler extends CaptivePageHandler implements CaptivePageHandl
 	}
 
 	@Override
-	public Boolean detect(HtmlPage page) {
-		return (page.getForm(LOGIN_FORM) != null && page.getForm(LOGIN_FORM).hasInputWithClass("button requires-tou"));
+	public Boolean detect(HttpInput page) {
+		return (HtmlPage.getForm(page, LOGIN_FORM) != null && HtmlPage.getForm(page, LOGIN_FORM).hasInputWithClass("button requires-tou"));
 	}
 
 	@Override
 	public HtmlForm getLoginForm() {
-		return page != null ? page.getForm(LOGIN_FORM) : null;
+		return HtmlPage.getForm(page, LOGIN_FORM);
 	}
 
 	@Override

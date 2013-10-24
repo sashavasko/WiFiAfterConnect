@@ -20,6 +20,7 @@ import com.wifiafterconnect.ParsedHttpInput;
 import com.wifiafterconnect.WifiAuthParams;
 import com.wifiafterconnect.html.HtmlForm;
 import com.wifiafterconnect.html.HtmlPage;
+import com.wifiafterconnect.util.HttpInput;
 
 /**
  * @author sasha
@@ -36,8 +37,8 @@ public class WanderingWifiHandler extends CaptivePageHandler implements CaptiveP
 	}
 
 	@Override
-	public Boolean detect(HtmlPage page) {
-		return (page.getUrl().getHost().contains("wanderingwifi") && page.getForm() != null);
+	public Boolean detect(HttpInput page) {
+		return (page.getURL().getHost().contains("wanderingwifi") && HtmlPage.getForm(page) != null);
 	}
 
 	@Override
@@ -52,9 +53,9 @@ public class WanderingWifiHandler extends CaptivePageHandler implements CaptiveP
 		ParsedHttpInput result = super.authenticate(parsedPage, authParams);
 
 		// Wandering WiFi is nuts. It has Several!!! automated pages at the end of authentication, 
-		// using a mix of redirecting methods.
+		// using a mix of redirecting methods, allow meta http-equiv=refresh here - we can't rely on JS.
 		if (result != null)
-			result = result.handleAutoRedirects(Constants.MAX_AUTOMATED_REQUESTS);
+			result = result.handleAutoRedirects(Constants.MAX_AUTOMATED_REQUESTS, true);
 
 		return result;
 	}

@@ -125,7 +125,7 @@ public class MainActivity extends FragmentActivity implements LoaderCallbacks<Cu
 	public boolean checkInetOnline () {
 		if (inetStatus == InternetStatus.UNKNOWN) {
 			setInternetStatus (InternetStatus.CHECKING);
-			Log.d(Constants.TAG, "starting checkUrl task");
+			//Log.d(Constants.TAG, "starting CheckOnlineAuthTask task");
 			CheckOnlineAuthTask task = new CheckOnlineAuthTask();
 			task.execute(this);
 		}

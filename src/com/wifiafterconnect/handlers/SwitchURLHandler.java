@@ -3,24 +3,23 @@
  */
 package com.wifiafterconnect.handlers;
 
+import com.wifiafterconnect.ParsedHttpInput;
 import com.wifiafterconnect.WifiAuthParams;
 import com.wifiafterconnect.html.HtmlForm;
+import com.wifiafterconnect.html.HtmlPage;
 import com.wifiafterconnect.util.HttpInput;
 
 /**
  * @author sasha
  *
  */
-public class AttHandler extends CaptivePageHandler  implements CaptivePageHandler.Detection{
+public class SwitchURLHandler extends CaptivePageHandler implements CaptivePageHandler.Detection{
 
-	public static final String SIGNATURE = "AT&T Wi-Fi";
-	
 	/* (non-Javadoc)
 	 * @see com.wifiafterconnect.handlers.CaptivePageHandler#checkParamsMissing(com.wifiafterconnect.WifiAuthParams)
 	 */
 	@Override
 	public boolean checkParamsMissing(WifiAuthParams params) {
-		// ATT wi-fi hotspots require no user entry, just click the Continue button
 		return false;
 	}
 
@@ -29,12 +28,21 @@ public class AttHandler extends CaptivePageHandler  implements CaptivePageHandle
 	 */
 	@Override
 	public void validateLoginForm(WifiAuthParams params, HtmlForm form) {
-		// Nothing to enter and nothing to validate
+		// no forms here, simply redirect to switch_url
 	}
 
 	@Override
 	public Boolean detect(HttpInput page) {
-		return page.getTitle().equalsIgnoreCase(SIGNATURE);
+		return HtmlPage.getForm(page) == null && page.getURLQueryVar("switch_url") != null;
+	}
+
+	@Override
+	public ParsedHttpInput authenticate(ParsedHttpInput parsedPage,
+			WifiAuthParams authParams) {
+		ParsedHttpInput result = parsedPage.getRefresh(parsedPage.getURLQueryVar("switch_url"));
+		if (result != null && result.hasForm())
+			result = null; // something went wrong
+		return result;
 	}
 
 }

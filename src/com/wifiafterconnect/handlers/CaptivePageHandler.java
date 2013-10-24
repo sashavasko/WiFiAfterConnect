@@ -27,11 +27,12 @@ import android.util.Log;
 
 import com.wifiafterconnect.html.HtmlForm;
 import com.wifiafterconnect.html.HtmlPage;
+import com.wifiafterconnect.util.HttpInput;
 
 public abstract class CaptivePageHandler {
 
 	public interface Detection {
-		public Boolean detect(HtmlPage page); 
+		public Boolean detect(HttpInput input); 
 	}
 	
 	// Strictly speaking we don't really need a map here for now
@@ -43,6 +44,7 @@ public abstract class CaptivePageHandler {
 		"CiscoHandler",
 		"UniFiHandler",
 		"WanderingWifiHandler",
+		"SwitchURLHandler",
 //		"AttHandler", Can be handled by GenericHandler
 		"WiNGHandler"
 	};
@@ -76,9 +78,9 @@ public abstract class CaptivePageHandler {
 	}
 	
 	// THE FACTORY
-	public static CaptivePageHandler autodetect (HtmlPage page) {
+	public static CaptivePageHandler autodetect (HttpInput input) {
 		
-		if (page == null || page.getForm() == null)
+		if (input == null)
 			return null;
 		
 		if (registeredHandlers == null)
@@ -92,7 +94,7 @@ public abstract class CaptivePageHandler {
 				//Method m = handlerClass.getMethod("detect", HtmlPage.class);
 				//Boolean result = (Boolean)m.invoke(handler, page);
 				Detection d = (Detection)handler;
-				Boolean result = d.detect(page);
+				Boolean result = d.detect(input);
 				Log.d(Constants.TAG, "detecting " + handlerClass.getName() + " result = " + result);
 				if (result)
 					break;
@@ -113,14 +115,14 @@ public abstract class CaptivePageHandler {
 		if (handler == null)
 			handler = new GenericHandler();
 
-		handler.setPage(page);
+		handler.setPage(input);
 		return handler;
 	}
 	
 	
-	protected HtmlPage page = null;
+	protected HttpInput page = null;
 	
-	public void setPage (HtmlPage page) {
+	public void setPage (HttpInput page) {
 		this.page = page;
 	}
 	
@@ -138,20 +140,24 @@ public abstract class CaptivePageHandler {
 		return null;
 	}
 
+	protected HtmlPage getHtmlPage() {
+		return (page != null && page instanceof HtmlPage) ? (HtmlPage)page : null;
+	}
+	
 	public HtmlForm getLoginForm () {
 		Log.d (Constants.TAG, "Page = " + page);
-		return page != null ? page.getForm() : null;
+		return HtmlPage.getForm(page);
 	}
 	
 	/* 
 	 * Possibly to be overriden in subclasses
 	 */
-	public URL getPostUrl () 
+	public URL getPostURL () 
 	{ 
 		HtmlForm form = getLoginForm();
 		if (form != null)
-			return form.formatActionURL (page.getUrl());
-		return page.getUrl(); 
+			return form.formatActionURL (page.getURL());
+		return page.getURL(); 
 	};
 	
 	public boolean checkUsernamePasswordMissing (WifiAuthParams params){

@@ -20,6 +20,7 @@ import java.net.URL;
 import com.wifiafterconnect.WifiAuthParams;
 import com.wifiafterconnect.html.HtmlForm;
 import com.wifiafterconnect.html.HtmlPage;
+import com.wifiafterconnect.util.HttpInput;
 
 /**
  * @author sasha
@@ -61,13 +62,13 @@ public class WiNGHandler extends CaptivePageHandler implements CaptivePageHandle
 	private static final String LOGIN_FORM_NAME = "frmLogin";
 
 	@Override
-	public void setPage(HtmlPage page) {
+	public void setPage(HttpInput page) {
 		super.setPage(page);
 		qV = "";
 		hsServer = "";
 
 		try {
-			for (String v : page.getUrl().getQuery().split(QUERY_VAR_REGEX)) {
+			for (String v : page.getURL().getQuery().split(QUERY_VAR_REGEX)) {
 				if (v.startsWith(QUERY_VAR_QV))
 					qV = v.substring(3);
 				else if (v.startsWith(QUERY_VAR_HS_SERVER))
@@ -87,12 +88,12 @@ public class WiNGHandler extends CaptivePageHandler implements CaptivePageHandle
 	}
 
 	@Override
-	public Boolean detect(HtmlPage page) {
+	public Boolean detect(HttpInput page) {
 		boolean hasQv = false;
 		boolean hasHsServer = false;
 		boolean hasFrmLogin = false;
 		try {
-			for (String v : page.getUrl().getQuery().split(QUERY_VAR_REGEX)) {
+			for (String v : page.getURL().getQuery().split(QUERY_VAR_REGEX)) {
 				if (v.startsWith(QUERY_VAR_QV))
 					hasQv = true;
 				else if (v.startsWith(QUERY_VAR_HS_SERVER))
@@ -101,19 +102,19 @@ public class WiNGHandler extends CaptivePageHandler implements CaptivePageHandle
 		}catch (NullPointerException e) {
 			return false;
 		}
-		hasFrmLogin = (page.getForm(LOGIN_FORM_NAME)!=null);
+		hasFrmLogin = (HtmlPage.getForm (page, LOGIN_FORM_NAME)!=null);
 		return (hasQv && hasHsServer && hasFrmLogin);
 	}
 
 	@Override
 	public HtmlForm getLoginForm() {
-		return page != null ? page.getForm(LOGIN_FORM_NAME) : null;
+		return HtmlPage.getForm(page, LOGIN_FORM_NAME);
 	}
 
 	@Override
-	public URL getPostUrl() {
+	public URL getPostURL() {
 		// TODO rewrite with values from port/postToURL javascript vars?
-		return super.getPostUrl();
+		return super.getPostURL();
 	}
 
 	@Override

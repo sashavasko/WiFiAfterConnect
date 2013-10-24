@@ -43,7 +43,7 @@ public class Preferences {
 		return sharedPrefs.getBoolean ("pref_ReenableWifiQuiet", true);
 	}
 
-	public URL getUrlToCheckHttp  () {
+	public URL getURLToCheckHttp  () {
 		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
 		URL url = null;
 		try {
@@ -56,7 +56,7 @@ public class Preferences {
 		return url;
 	} 
 
-	public URL getUrlToCheckHttps () {
+	public URL getURLToCheckHttps () {
 		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
 		URL url = null;
 		try {

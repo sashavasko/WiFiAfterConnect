@@ -35,7 +35,7 @@ public class HtmlForm {
 	protected String id;
 	protected String action;
 	protected String method;
-	protected URL actionUrl;
+	protected URL actionURL;
 	protected Map<String, HtmlInput> inputs = new HashMap<String,HtmlInput>();
 	
 	public void addInput (HtmlInput i) {
@@ -47,8 +47,8 @@ public class HtmlForm {
 		id = e.attr("id");
 		action = e.attr("action");
 		try {
-			actionUrl = new URL(action);
-		} catch (MalformedURLException ex) {actionUrl = null;}
+			actionURL = new URL(action);
+		} catch (MalformedURLException ex) {actionURL = null;}
 
 		method = e.attr("method");
     	for (Element ie : e.getElementsByTag("input")) {
@@ -126,24 +126,24 @@ public class HtmlForm {
 		return postData.toString();
 	}
 	
-	public URL formatActionURL (URL originalUrl) {
-		URL result = originalUrl;
+	public URL formatActionURL (URL originalURL) {
+		URL result = originalURL;
 		if (action != null) {
 			String protocol;
 			String authority = null;
 			String file = action;
 			String ref = null;
-			if (actionUrl != null) {
-				protocol = actionUrl.getProtocol();
-				authority = actionUrl.getAuthority();
+			if (actionURL != null) {
+				protocol = actionURL.getProtocol();
+				authority = actionURL.getAuthority();
 				// we want to keep the query in as some portals use query params in post requests
-				file = actionUrl.getFile();
-				ref = actionUrl.getRef();
+				file = actionURL.getFile();
+				ref = actionURL.getRef();
 			}else {
-				protocol = originalUrl.getProtocol();
+				protocol = originalURL.getProtocol();
 			}
 			if (authority == null)
-				authority = originalUrl.getAuthority();
+				authority = originalURL.getAuthority();
 			
 			String urlString = protocol + "://" + authority;
 			if (file != null)
@@ -186,6 +186,18 @@ public class HtmlForm {
 					i.setValue(value);
 			}
 		}
+	}
+
+	public boolean isSubmittable() {
+		boolean missingValues = false;
+		boolean hasSubmit = false;
+		for (HtmlInput i :inputs.values()) {
+			if (!i.isHidden() && i.getValue().isEmpty() && WifiAuthParams.isSupportedParamType(i))
+				missingValues = true;
+			if (i.matchType(HtmlInput.TYPE_SUBMIT))
+				hasSubmit = true;
+		}		
+		return !missingValues && hasSubmit;
 	}
 	
 

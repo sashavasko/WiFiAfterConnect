@@ -27,49 +27,130 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.util.Log;
 
 import com.wifiafterconnect.handlers.CaptivePageHandler;
 import com.wifiafterconnect.html.HtmlForm;
-import com.wifiafterconnect.html.HtmlInput;
 import com.wifiafterconnect.html.HtmlPage;
+import com.wifiafterconnect.util.HttpInput;
 import com.wifiafterconnect.util.Worker;
 
 public class ParsedHttpInput extends Worker{
 
+	public class JsonInput extends HttpInput {
+		private JSONObject json = null;
+		
+		public JsonInput(URL url) {
+			super(url);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public boolean parse(String source) {
+			json = null;
+			if (!super.parse(source))
+				return false;
+			try {
+				json = new JSONObject (source);
+			} catch (JSONException e) {
+			}
+			return (json != null);
+		}
+		
+		public JSONObject getJSONObject () {
+			return json;
+		}
+
+		public JSONObject getJSONObject (final String name) throws JSONException {
+			return json != null? json.getJSONObject(name) : null;
+		}
+	}
+	
 	private CaptivePageHandler captiveHandler = null;
-	private HtmlPage htmlPage;
+	private HttpInput httpInput = null;
+	private Map<String,String> httpHeaders = new HashMap<String,String>();
+	
+	public static final String HTTP_HEADER_LOCATION = "Location";
+	
 
 	public ParsedHttpInput (Worker other, URL url, String html) {
 		super (other);
 		parse (url, html);
 	}
 
-	public void parse(URL url, String html) {
-		htmlPage = new HtmlPage(url);
-		if (!html.isEmpty()) {
-			if (!htmlPage.parse (html)) {
-				error("Failed to parse the page - no document found");
-				return;
-			}
+	private void addHttpHeader (final String key, final String value) {
+		httpHeaders.put (key, value);
+	}
 
-			if (!submitOnLoad()) {
-				// Probably the actual login page
-				captiveHandler = CaptivePageHandler.autodetect (htmlPage);
-				if (captiveHandler != null)
-					debug("Detected Captive portal "+ captiveHandler);
+	private void parse(URL url, String input) {
+		captiveHandler = null;
+		httpInput = null;
+		httpHeaders.clear();
+		
+		if (input.startsWith("{")) {
+			// TODO implement parsing as JSON???
+			JsonInput jsonInput = new JsonInput (url);
+			if (!jsonInput.parse(input))
+				error("Failed to parse JSON input");
+			else {
+				httpInput = jsonInput;
+				captiveHandler = CaptivePageHandler.autodetect (httpInput);
 			}
 		}else {
-			captiveHandler = null;
+			HtmlPage htmlPage = new HtmlPage(url);
+			if (!htmlPage.parse (input)) {
+				error("Failed to parse the HTML page");
+			}else {
+				httpInput = htmlPage;
+				if (!submitOnLoad(htmlPage)) {
+					// Probably the actual login page
+					captiveHandler = CaptivePageHandler.autodetect (httpInput);
+				}
+			}
+		}
+
+		if (captiveHandler != null)
+			debug("Detected Captive portal "+ captiveHandler);
+		
+		// Fallback - plain text container
+		if (httpInput == null){
+			httpInput = new HttpInput (url);
+			httpInput.parse(input);
 		}
 	}
 
+	public HtmlPage getHtmlPage() {
+		return (httpInput != null && httpInput instanceof HtmlPage) ? (HtmlPage)httpInput : null;
+	}
+	
+	public JSONObject getJSONObject() {
+		return (httpInput != null && httpInput instanceof JsonInput) ? ((JsonInput)httpInput).getJSONObject() : null;
+	}
+	
+	public JSONObject getJSONObject(final String name) throws JSONException {
+		return (httpInput != null && httpInput instanceof JsonInput) ? ((JsonInput)httpInput).getJSONObject(name) : null;
+	}
+	
+	/*
+	 * Guaranteed not to return null
+	 */
+	public String getHttpHeader (final String key) {
+		String val = httpHeaders.get(key); 
+		return val == null ? "" : val;
+	}
+	
 	public String buildPostData (final WifiAuthParams authParams) {
 		if (captiveHandler != null)
 			return captiveHandler.getPostData(authParams);
-		
-		HtmlForm form = htmlPage.getForm();
+		HtmlPage hp = getHtmlPage();
+		HtmlForm form = hp != null ? hp.getForm() : null;
 		if (form != null)
 			return form.formatPostData();
 		
@@ -90,20 +171,26 @@ public class ParsedHttpInput extends Worker{
 		return null;
 	}
 
-	public ParsedHttpInput handleAutoRedirects (int maxRequests) {
-		ParsedHttpInput result = this;
+	public ParsedHttpInput handleAutoRedirects (int maxRequests, boolean handleMetaRefresh) {
 
-		while (result != null && --maxRequests >= 0) {
-			if (result.submitOnLoad() || result.hasSubmittableForm()) {
-				debug("Handling onLoad submit ...");
-				result = result.postForm (null);
-			}else if (result.hasMetaRefresh()) {
-				debug("Handling meta refresh ...");
-				result = result.getRefresh ();
-			}else
-				break;
-		}
-		return result;
+		if (maxRequests <= 0)
+			return this;
+		
+		ParsedHttpInput result = null;
+
+		String redirectLoc = null;
+		if (submitOnLoad() || hasSubmittableForm()) {
+			debug("Handling onLoad submit ...");
+			result = postForm (null);
+		}else if (!(redirectLoc = getHttpHeader(ParsedHttpInput.HTTP_HEADER_LOCATION)).isEmpty()){
+			debug("Handling Location redirect ...");
+			result = getRefresh (redirectLoc);
+		}if (handleMetaRefresh && hasMetaRefresh()) {
+			debug("Handling meta refresh ...");
+			result = getRefresh (null);
+		}else
+			return this;
+		return (result != null) ? result.handleAutoRedirects(maxRequests-1, handleMetaRefresh) : null; 
 	}
 	
 	public boolean authenticateCaptivePortal(WifiAuthParams authParams) {
@@ -112,28 +199,41 @@ public class ParsedHttpInput extends Worker{
 		return false;
 	}
 	
+	public boolean submitOnLoad(HtmlPage hp) {
+		if (hp != null) {
+			String onLoad = hp.getOnLoad();
+			debug("OnLoad = [" + onLoad + "]");
+			return onLoad.equalsIgnoreCase("document.forms[0].submit();")
+					|| onLoad.equalsIgnoreCase("document.form.submit();")
+					|| onLoad.endsWith(".submit();"); // this one is probably enough
+		}
+		return false;
+	}
+	
 	public boolean submitOnLoad() {
-		String onLoad = htmlPage.getOnLoad();
-		debug("OnLoad = [" + onLoad + "]");
-		return onLoad.equalsIgnoreCase("document.forms[0].submit();")
-				|| onLoad.equalsIgnoreCase("document.form.submit();")
-				|| onLoad.endsWith(".submit();"); // this one is probably enough
+		return submitOnLoad(getHtmlPage());
 	}
 
 	public final String getHtml() {
-		return htmlPage.getSource();
+		return (httpInput != null && httpInput instanceof HtmlPage) ? httpInput.getSource() : "";
 	}
 
-	public final URL getUrl() {
-		return htmlPage.getUrl();
+	public final String getRaw() {
+		return (httpInput != null) ? httpInput.getSource() : "";
+	}
+
+	public final URL getURL() {
+		return (httpInput != null) ? httpInput.getURL() : null;
 	}
 
 	public boolean hasMetaRefresh() {
-		return htmlPage.hasMetaRefresh();
+		HtmlPage hp = getHtmlPage();
+		return hp != null && hp.hasMetaRefresh();
 	}
 
 	public URL getMetaRefreshURL() throws MalformedURLException {
-		return htmlPage.getMetaRefreshURL();
+		HtmlPage hp = getHtmlPage();
+		return hp != null ? hp.getMetaRefreshURL() : null;
 	}
 	
 	public boolean isKnownCaptivePortal() { 
@@ -141,10 +241,13 @@ public class ParsedHttpInput extends Worker{
 	}
 
 	public URL getFormPostURL() {
-		HtmlForm form = htmlPage.getForm();
-		if (form != null)
-			return form.formatActionURL(htmlPage.getUrl());
-		return htmlPage.getUrl();
+		HtmlPage hp = getHtmlPage();
+		if (hp != null) {
+			HtmlForm form = hp.getForm();
+			if (form != null)
+				return form.formatActionURL(getURL());
+		}
+		return getURL();
 	}
 
 	public String getCookies() {
@@ -153,15 +256,17 @@ public class ParsedHttpInput extends Worker{
 	}
 
 	public boolean hasSubmittableForm() {
-		return htmlPage.hasFormWithInputType(HtmlInput.TYPE_SUBMIT);
+		HtmlPage hp = getHtmlPage();
+		return hp != null && hp.hasSubmittableForm();
 	}
 
 	public boolean hasForm() {
-		return (htmlPage.getForm() != null);
+		HtmlPage hp = getHtmlPage();
+		return (hp != null && hp.getForm() != null);
 	}
 	
-	public String getUrlQueryVar(String varName) {
-		return htmlPage.getUrlQueryVar(varName);
+	public String getURLQueryVar(String varName) {
+		return httpInput.getURLQueryVar(varName);
 	}
 
 	public ParsedHttpInput postForm (WifiAuthParams authParams) {
@@ -170,21 +275,35 @@ public class ParsedHttpInput extends Worker{
 		String postDataString = buildPostData(authParams);
 		String cookies = getCookies();
 		
-		return post (this, url, postDataString, cookies);
+		return post (this, url, postDataString, cookies, getURL().toString());
 	}
 	
-	public ParsedHttpInput getRefresh () {
+	public ParsedHttpInput getRefresh (final String url) {
 		ParsedHttpInput result = null;
 		try {
-			result = get (this, getMetaRefreshURL());
+			result = get (this, url == null ? getMetaRefreshURL() : new URL(url), getURL().toString());
 		} catch (MalformedURLException e) {
 			exception (e);
 		}
 		
 		return result;
 	}
+	
+	public static void  showRequestProperties (Worker context, HttpURLConnection conn) {
+		Map<String,List<String>> reqProps = conn.getRequestProperties();
+		context.debug("RequestProperties for [" + conn.getURL() + "]");
+		for (String key : reqProps.keySet()) {
+			String propStr = "RequestPropery[" + key + "] = {";
+			for (String val : reqProps.get(key)) {
+				propStr += "[" + val + "]";
+			}
+			context.debug(propStr + "}");
+		}
+	}
+	// Yes, we are dirty liars
+	public static final String USER_AGENT = "Mozilla/5.0 (Android; Mobile; rv:24.0) Gecko/20100101 Firefox/24.0";
 
-	public static ParsedHttpInput post (Worker context, URL url, String postDataString, String cookies) {
+	public static ParsedHttpInput post (Worker context, URL url, String postDataString, String cookies, String referer) {
 		context.debug("POST to url [" + url + "], data to post:["+postDataString+"]");
 		if (postDataString == null || postDataString.isEmpty()){
 			context.error("Failed to compile data for authentication POST");
@@ -198,17 +317,29 @@ public class ParsedHttpInput extends Worker{
 		try {
 			//apparently there are weird captive portals making use of query args on post requests
 			//URL postUrl = new URL (url.getProtocol() + "://" + url.getAuthority() + url.getPath());
-			URL postUrl = url;
-			context.debug("Post URL = [" + postUrl + "]");
-			conn = (HttpURLConnection) postUrl.openConnection();
+			URL postURL = url;
+			context.debug("Post URL = [" + postURL + "]");
+			conn = (HttpURLConnection) postURL.openConnection();
 			conn.setConnectTimeout(Constants.SOCKET_TIMEOUT_MS);
 			conn.setReadTimeout(Constants.SOCKET_TIMEOUT_MS);
 			conn.setDoInput(true);
 			conn.setDoOutput(true);
 			conn.setUseCaches(false);
+			
+			// we need the next two to avoid 404 code on non-standard ports : 
+			conn.setRequestProperty("User-Agent",USER_AGENT);
+			conn.setRequestProperty("Accept","*/*");
+			conn.setRequestProperty("Content-Type","application/x-www-form-urlencoded");
+			conn.setRequestProperty("charset", "utf-8");
+            conn.setRequestProperty("Content-Length", Integer.toString(postDataString.getBytes().length));
+			if (referer != null)
+				conn.setRequestProperty("Referer",referer);
 			if (cookies != null)
 				conn.setRequestProperty("Cookie", cookies);
+			
+			showRequestProperties (context, conn);
 			conn.setRequestMethod("POST");
+			
 			
 			DataOutputStream output = new DataOutputStream (conn.getOutputStream());
 			output.writeBytes(postDataString);
@@ -232,29 +363,44 @@ public class ParsedHttpInput extends Worker{
 		}
 	}
 	
-	public static ParsedHttpInput get (Worker context, URL url) {
+	public static ParsedHttpInput get (Worker context, URL url, String referer) {
 		context.debug("Getting [" + url + "]");
 		if (url != null){
+			HttpURLConnection conn = null;
 			try {
-				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+				conn = (HttpURLConnection) url.openConnection();
 				conn.setConnectTimeout(Constants.SOCKET_TIMEOUT_MS);
 				conn.setReadTimeout(Constants.SOCKET_TIMEOUT_MS);
 				conn.setUseCaches(false);
+				conn.setRequestProperty("User-Agent","Mozilla/5.0 ( compatible ) ");
+				conn.setRequestProperty("Accept","*/*");
+				if (referer != null)
+					conn.setRequestProperty("Referer",referer);
+				
+				showRequestProperties (context, conn);
 				return receive (context, conn);
 			} catch (IOException e) {
 				context.exception(e);
+			}finally {
+				conn.disconnect();
 			}
 		}
 		return null;
 	}
-
+	
 	public static ParsedHttpInput receive (Worker creator, HttpURLConnection conn) {
 		ParsedHttpInput parsed = null;
 		int totalBytesIn = 0;
 		try {
 			InputStream in = null;
-			in = new BufferedInputStream(conn.getInputStream());
+			try {
+				in = new BufferedInputStream(conn.getInputStream());
+			} catch (FileNotFoundException e) {
+				in = new BufferedInputStream(conn.getErrorStream());
+			}
 
+			creator.debug("Response code = " + conn.getResponseCode());
+			
 			BufferedReader r = new BufferedReader(new InputStreamReader(in));
 			StringBuilder total = new StringBuilder();
 			char []buffer = new char[4096];
@@ -281,6 +427,7 @@ public class ParsedHttpInput extends Worker{
 			do {
 				field = conn.getHeaderField(pos);
 				if (field != null) {
+					parsed.addHttpHeader(conn.getHeaderFieldKey(pos), field);
 					creator.debug("Field["+pos+"("+conn.getHeaderFieldKey(pos)+")] = [" + field + "]");
 				}
 				++pos;

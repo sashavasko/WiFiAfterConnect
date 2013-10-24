@@ -43,7 +43,7 @@ public class URLRedirectChecker extends Worker{
 	
 	public AuthorizationType defaultType = AuthorizationType.IfNeeded;
 	
-	private void InitUrls () {
+	private void initURLs () {
 		if (getContext() == null) {
 			try {
 				urlToCheckHttp = new URL(Constants.URL_TO_CHECK_HTTP);
@@ -52,8 +52,8 @@ public class URLRedirectChecker extends Worker{
 				exception (e);
 			}
 		}else {
-			urlToCheckHttp = prefs.getUrlToCheckHttp();
-			urlToCheckHttps = prefs.getUrlToCheckHttps();
+			urlToCheckHttp = prefs.getURLToCheckHttp();
+			urlToCheckHttps = prefs.getURLToCheckHttps();
 		}
 	}
 	
@@ -63,21 +63,21 @@ public class URLRedirectChecker extends Worker{
 	
 	public URLRedirectChecker(Logger logger, Context context) {
 		super (logger, context);
-		InitUrls ();
+		initURLs ();
 	}
 	
 	public URLRedirectChecker(String tag, Context context) {
 		super (new Logger (tag == null ? "URLRedirectChecker" : tag), context);
-		InitUrls ();
+		initURLs ();
 	}
 	
 	public URLRedirectChecker(Worker creator) {
 		super (creator);
-		InitUrls ();
+		initURLs ();
 	}
 	
-	public boolean attemptAuthorization (URL url, ParsedHttpInput parsedPage) {
-		WifiAuthenticator auth = new WifiAuthenticator (this, url);
+	public boolean attemptAuthorization (ParsedHttpInput parsedPage) {
+		WifiAuthenticator auth = new WifiAuthenticator (this, parsedPage.getURL());
 		return auth.attemptAuthentication (parsedPage, null);
 	}
 	
@@ -152,7 +152,6 @@ public class URLRedirectChecker extends Worker{
 		if (url == null)
 			url = urlToCheckHttp;
 		
-		HttpURLConnection conn = null;
 		try {
 			
 			//URL url = new URL(protocol + "://www.google.com");
@@ -162,12 +161,7 @@ public class URLRedirectChecker extends Worker{
 			// due to switching to wifi, name resolution can fail if the timing in just right,
 			// give it another chance
 			for ( int i = 0; i < 2 && parsed == null ; ++i ) {
-				conn = (HttpURLConnection) url.openConnection();
-				conn.setConnectTimeout(Constants.SOCKET_TIMEOUT_MS);
-				conn.setReadTimeout(Constants.SOCKET_TIMEOUT_MS);
-				conn.setUseCaches(false);
-
-				if ((parsed = ParsedHttpInput.receive (this, conn)) == null) {
+				if ((parsed = ParsedHttpInput.get (this, url, null)) == null) {
 					try {	Thread.sleep(100); } catch (InterruptedException e) {} // don't care
 				}
 			}
@@ -175,46 +169,41 @@ public class URLRedirectChecker extends Worker{
 				return false;
 			
 		    String field = null;
-		    URL redirectUrl = null;
+		    URL redirectURL = null;
 		    
 		    if (doAuthorize == AuthorizationType.Force) {
-		    	success = attemptAuthorization (conn.getURL(), parsed);
-		    }else if (!url.getHost().equals(conn.getURL().getHost())) {
+		    	success = attemptAuthorization (parsed);
+		    }else if (!url.getHost().equals(parsed.getURL().getHost())) {
 		        // we were redirected! Kick the user out to the browser to sign on?
-		    	debug("Redirected to  [" + conn.getURL() + "]");
+		    	debug("Redirected to  [" + parsed.getURL() + "]");
 		    	if (doAuthorize != AuthorizationType.None) {
-		    		setSaveLogFile (conn.getURL());
-		    		success = attemptAuthorization (conn.getURL(), parsed);
+		    		setSaveLogFile (parsed.getURL());
+		    		success = attemptAuthorization (parsed);
 		    	}
-		    }else if ((field = conn.getHeaderField("Location")) != null){
-		    	redirectUrl = new URL (field);
+		    }else if (!(field = parsed.getHttpHeader(ParsedHttpInput.HTTP_HEADER_LOCATION)).isEmpty()){
+		    	redirectURL = new URL (field);
 		    }else if (parsed.hasMetaRefresh()) {
-		    	redirectUrl = parsed.getMetaRefreshURL();
+		    	redirectURL = parsed.getMetaRefreshURL();
 		    }else
 		    	success = true;
 
-		    if (redirectUrl != null) {
-		    	if (!redirectUrl.getHost().equals(conn.getURL().getHost())) {
-		    		debug("Redirected to  [" + redirectUrl + "]. Explicit handling needed.");
-		    		setSaveLogFile (redirectUrl);
-		    		if (!redirectUrl.getProtocol().equals(url.getProtocol())) {
+		    if (redirectURL != null) {
+		    	if (!redirectURL.getHost().equals(parsed.getURL().getHost())) {
+		    		debug("Redirected to  [" + redirectURL + "]. Explicit handling needed.");
+		    		setSaveLogFile (redirectURL);
+		    		if (!redirectURL.getProtocol().equals(url.getProtocol())) {
 		    			debug("protocol has changed!");
 		    		}
 		    		if (doAuthorize != AuthorizationType.None)
-		    			success = checkHttpConnection (redirectUrl, AuthorizationType.Force);
+		    			success = checkHttpConnection (redirectURL, AuthorizationType.Force);
 		    	} else {
 			    	// something wicked happened otherwise
-		    		error("Unexpected redirect URL  [" + redirectUrl + "] - giving up.");
+		    		error("Unexpected redirect URL  [" + redirectURL + "] - giving up.");
 		    	}
 		    }
 		} catch (MalformedURLException e){
     		error("Redirected to a malformed url ");
     		exception (e);
-		} catch (IOException e) {
-			exception (e);
-    	} finally {
-			if (conn != null)
-				conn.disconnect();
 		}
 		return success;
 	}

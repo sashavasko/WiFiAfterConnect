@@ -16,7 +16,6 @@
 
 package com.wifiafterconnect;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import com.wifiafterconnect.URLRedirectChecker.AuthorizationType;
@@ -50,9 +49,9 @@ public class WifiAuthenticator extends Worker{
 	
 	private String authHost;
 	
-	public WifiAuthenticator (Worker creator, URL hostUrl) {
+	public WifiAuthenticator (Worker creator, URL hostURL) {
 		super (creator);
-		authHost = hostUrl.getHost();
+		authHost = hostURL.getHost();
 		if (authHost.matches("([0-9]{1,3}\\.){3}[0-9]{1,3}")) // raw IP address - supplement with WiFi SSID
 		{
 			String ssid = WifiTools.getSSID(getContext());
@@ -203,7 +202,7 @@ public class WifiAuthenticator extends Worker{
 			 */
 			Intent intent = makeIntent(WifiAuthenticatorActivity.class);
 			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			intent.putExtra (OPTION_URL, parsedPage.getUrl().toString());
+			intent.putExtra (OPTION_URL, parsedPage.getURL().toString());
 			intent.putExtra (OPTION_PAGE, parsedPage.getHtml());
 			toIntent(intent);
 			debug("Starting acivity for intent:"+intent.toString());
@@ -211,53 +210,37 @@ public class WifiAuthenticator extends Worker{
 		}
 	}
 
-	
 	public boolean attemptAuthentication (ParsedHttpInput parsedPage, WifiAuthParams authParams) {
-		// may need to switch it to handleAutoRedirects()
-		if (parsedPage.submitOnLoad()) {
-			debug("Handling pre-auth onLoad submit...");
-			parsedPage = parsedPage.postForm (null);
-		}
-
-		// probably need to move this block to either ParsedHttpInput to CaptivePageHandler
-		boolean success = false;
-		if (!parsedPage.hasForm()) {
-			
-			URL switchUrl = null;
-			// Target wifi has this, maybe others do too.
-			String switchUrlStr = parsedPage.getUrlQueryVar("switch_url");
-			debug("Page has no Form, switch_url param = ["+switchUrlStr+"]");
-			if (switchUrlStr == null)
-				return false;
-			try {
-				switchUrl = new URL(switchUrlStr);
-			}catch (MalformedURLException e) {
-				error("Malformed refresh url = [" + switchUrlStr + "]");
-				return false;
-			}
-			if ((parsedPage = ParsedHttpInput.get (this, switchUrl)) != null)
-				success = !parsedPage.hasForm(); // this could be all we ever needed
-		}
 		
-		if (!success) {
-			debug("Attempting authentication at [" + parsedPage.getUrl() + "]");
-			if (!parsedPage.isKnownCaptivePortal()) {
-				error("Unknown Captive portal. Cannot authenticate.");
+		/* Some portals supply as the first page ip, MAC etc 
+		 * inside of the form that has to be submitted onLoad.
+		 * Wandering WiFi is the worst offender.
+		 */
+		debug("Handling pre-auth redirects...");
+		// don't want to do meta http-equiv=refresh here as it is used to detect browsers with no JS support
+		// and display error requiring it
+		if ((parsedPage = parsedPage.handleAutoRedirects (Constants.MAX_AUTOMATED_REQUESTS, false)) == null) {
+			error ("Failed to follow the sequence of redirects...");
+			return false;
+		}
+		if (!parsedPage.isKnownCaptivePortal()) {
+			error ("Unknown Captive portal. Aborting.");
+			return false;
+		}
+			
+		debug("Checking for missing inputs at [" + parsedPage.getURL() + "]");
+		if (authParams == null) {
+			authParams = getStoredAuthParams();
+
+			if (parsedPage.checkParamsMissing(authParams)){
+				requestUserParams (parsedPage);
+				// we will have to try authentication directly from user-facing activity
 				return false;
 			}
+		}	
 
-			if (authParams == null) {
-				authParams = getStoredAuthParams();
-
-				if (parsedPage.checkParamsMissing(authParams)){
-					requestUserParams (parsedPage);
-					// we will have to try authentication directly from user-facing activity
-					return false;
-				}
-			}	
-
-			success = parsedPage.authenticateCaptivePortal (authParams);
-		}
+		debug("Attempting authentication at [" + parsedPage.getURL() + "]");
+		boolean success = parsedPage.authenticateCaptivePortal (authParams);
 		
 		if (success) {
 			debug("Re-checking connection ...");

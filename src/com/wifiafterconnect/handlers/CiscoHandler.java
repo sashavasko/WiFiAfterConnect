@@ -18,6 +18,7 @@ package com.wifiafterconnect.handlers;
 import com.wifiafterconnect.WifiAuthParams;
 import com.wifiafterconnect.html.HtmlForm;
 import com.wifiafterconnect.html.HtmlPage;
+import com.wifiafterconnect.util.HttpInput;
 
 /**
  * @author sasha
@@ -38,8 +39,9 @@ public class CiscoHandler extends CaptivePageHandler implements CaptivePageHandl
 	}
 
 	@Override
-	public Boolean detect(HtmlPage page) {
-		HtmlForm form = page.getForm();
+	public Boolean detect(HttpInput page) {
+		HtmlForm form = HtmlPage.getForm(page);
+		//Log.d(Constants.TAG, "Form = " + form + " Page is HTML = " + (page instanceof HtmlPage));
 		return (form != null && form.hasInput("buttonClicked"));
 	}
 

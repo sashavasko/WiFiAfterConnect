@@ -15,10 +15,8 @@
  */
 package com.wifiafterconnect.html;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,53 +28,35 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import android.annotation.SuppressLint;
 import android.util.Log;
 
 import com.wifiafterconnect.Constants;
+import com.wifiafterconnect.util.HttpInput;
 
-public class HtmlPage {
-	private String source = "";
+public class HtmlPage extends HttpInput {
 	private Map<String,HtmlForm> namedForms = new HashMap<String,HtmlForm>();
 	private List<HtmlForm> forms = new ArrayList<HtmlForm>();
 	private List<JavaScript> javaScripts = new ArrayList<JavaScript>();
 	
 	private String onLoad = "";
-	private String metaRefresh = "";
 	private String title = "";
 	
-	private URL url = null;
+	private Map<String,String> namedMetas = new HashMap<String,String>();
+	private Map<String,String> httpEquivMetas = new HashMap<String,String>();
 	
 	public HtmlPage (URL url){
-		this.url = url;
+		super (url);
 	}
 	
-	public URL getUrl () {
-		return url;
-	}
-
+	@Override
 	public String getTitle () {
 		return title;
 	}
 
-	public String getUrlQueryVar (String varName) {
-		varName += "=";
-		for (String v : url.getQuery().split("[&]")) {
-			if (v.startsWith(varName)) {
-				try {
-					return URLDecoder.decode(v.substring(varName.length()),"UTF-8");
-				} catch (UnsupportedEncodingException e) {}
-			}
-		}
-		return null;
-	}
-
+	@Override
 	public boolean parse (String html) {
-		this.source = html;
-		
 		Log.d(Constants.TAG, "Page " + this);
-		
-		if (html == null || html.isEmpty())
+		if (!super.parse(html))
 			return false;
 		
 		Document doc = Jsoup.parse(html);
@@ -91,9 +71,12 @@ public class HtmlPage {
 		}
 
 		for (Element meta : content.getElementsByTag("meta")) {
-			if (meta.attr("http-equiv").equalsIgnoreCase("refresh")) {
-				metaRefresh = meta.attr("content");
-				break;
+			String c = meta.attr("content");
+			if (!c.isEmpty()) {
+				if (meta.hasAttr("http-equiv"))
+					httpEquivMetas.put(meta.attr("http-equiv").toLowerCase(Locale.ENGLISH), c);
+				else if (meta.hasAttr("name"))
+					namedMetas.put(meta.attr("name").toLowerCase(Locale.ENGLISH), c);
 			}
 		}
 
@@ -139,10 +122,6 @@ public class HtmlPage {
 		return true;
 	}
 	
-	public String getSource() {
-		return source;
-	}
-	
 	public String getOnLoad() {
 		return onLoad;
 	}
@@ -159,6 +138,10 @@ public class HtmlPage {
 		return f;
 	}
 	
+	public static HtmlForm getForm(HttpInput page, int id) {
+		return (page != null && (page instanceof HtmlPage)) ? ((HtmlPage)page).getForm(id) : null;
+	}
+
 	public HtmlForm getForm (String id) {
 		HtmlForm f = null;
 		if (id != null)
@@ -166,8 +149,16 @@ public class HtmlPage {
 		return f;
 	}
 	
+	public static HtmlForm getForm(HttpInput page, String id) {
+		return (page != null && id != null && (page instanceof HtmlPage)) ? ((HtmlPage)page).getForm(id) : null;
+	}
+
 	public HtmlForm getForm () {
 		return getForm(0);
+	}
+	
+	public static HtmlForm getForm(HttpInput page) {
+		return (page != null && (page instanceof HtmlPage)) ? ((HtmlPage)page).getForm() : null;
 	}
 
 	public Collection<HtmlForm> forms () {
@@ -175,21 +166,25 @@ public class HtmlPage {
 	}
 
 	public boolean hasMetaRefresh() {
-		return !metaRefresh.isEmpty();
+		return httpEquivMetas.containsKey("refresh");
 	}
 	
-	@SuppressLint("DefaultLocale") public URL getMetaRefreshURL () throws MalformedURLException {
-		if (metaRefresh.isEmpty())
-			return null;
-		
+	public URL getMetaRefreshURL () throws MalformedURLException {
 		URL url = null;
 
-		// url= token could be upper/mixed case:
-		int start = metaRefresh.toLowerCase(Locale.ENGLISH).indexOf("url=");
-		if (start >= 0)
-			url = new URL (metaRefresh.substring(start+4));
-		
+		String metaRefresh = httpEquivMetas.get ("refresh");
+		if (metaRefresh != null) {
+			// url= token could be upper/mixed case:
+			int start = metaRefresh.toLowerCase(Locale.ENGLISH).indexOf("url=");
+			if (start >= 0)
+				url = new URL (metaRefresh.substring(start+4));
+		}
 		return url;
+	}
+	
+	public String getMeta (final String name) {
+		String c = namedMetas.get(name);
+		return (c == null) ? "" : namedMetas.get(name);
 	}
 	
 	public String getDocumentReadyFunc () {
@@ -204,6 +199,14 @@ public class HtmlPage {
 	public boolean hasFormWithInputType (String type) {
 		for (HtmlForm f : forms) {
 			if (f.getVisibleInputByType(type) != null)
+				return true;
+		}
+		return false;
+	}
+
+	public boolean hasSubmittableForm() {
+		for (HtmlForm f : forms) {
+			if (f.isSubmittable())
 				return true;
 		}
 		return false;
