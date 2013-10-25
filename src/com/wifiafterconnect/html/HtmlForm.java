@@ -192,7 +192,8 @@ public class HtmlForm {
 		boolean missingValues = false;
 		boolean hasSubmit = false;
 		for (HtmlInput i :inputs.values()) {
-			if (!i.isHidden() && i.getValue().isEmpty() && WifiAuthParams.isSupportedParamType(i))
+			if (!i.isHidden() && i.getValue().isEmpty()
+					&& (WifiAuthParams.isSupportedParamType(i) || i.matchType(HtmlInput.TYPE_CHECKBOX)))
 				missingValues = true;
 			if (i.matchType(HtmlInput.TYPE_SUBMIT))
 				hasSubmit = true;

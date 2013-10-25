@@ -183,7 +183,7 @@ public class URLRedirectChecker extends Worker{
 		    }else if (!(field = parsed.getHttpHeader(ParsedHttpInput.HTTP_HEADER_LOCATION)).isEmpty()){
 		    	redirectURL = new URL (field);
 		    }else if (parsed.hasMetaRefresh()) {
-		    	redirectURL = parsed.getMetaRefreshURL();
+		    	redirectURL = new URL(parsed.getMetaRefreshURL());
 		    }else
 		    	success = true;
 

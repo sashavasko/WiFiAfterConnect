@@ -15,7 +15,6 @@
  */
 package com.wifiafterconnect.html;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -169,15 +168,15 @@ public class HtmlPage extends HttpInput {
 		return httpEquivMetas.containsKey("refresh");
 	}
 	
-	public URL getMetaRefreshURL () throws MalformedURLException {
-		URL url = null;
+	public String getMetaRefreshURL () {
+		String url = null;
 
 		String metaRefresh = httpEquivMetas.get ("refresh");
 		if (metaRefresh != null) {
 			// url= token could be upper/mixed case:
 			int start = metaRefresh.toLowerCase(Locale.ENGLISH).indexOf("url=");
 			if (start >= 0)
-				url = new URL (metaRefresh.substring(start+4));
+				url = metaRefresh.substring(start+4);
 		}
 		return url;
 	}

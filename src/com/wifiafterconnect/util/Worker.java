@@ -56,6 +56,10 @@ public class Worker extends ContextHolder {
 			logger.error(msg);
 	}
 	
+	public boolean isSaveLogToFile() {
+		return prefs.getSaveLogToFile();
+	}
+	
 	public void setLogFileName (String filename) {
 		if (prefs.getSaveLogToFile()) {
 			File saveDir = prefs.getSaveLogLocation();
