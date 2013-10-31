@@ -211,7 +211,7 @@ public class WifiAuthenticator extends Worker{
 	}
 
 	public boolean attemptAuthentication (ParsedHttpInput parsedPage, WifiAuthParams authParams) {
-		
+
 		/* Some portals supply as the first page ip, MAC etc 
 		 * inside of the form that has to be submitted onLoad.
 		 * Wandering WiFi is the worst offender.

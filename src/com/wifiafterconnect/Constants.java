@@ -36,4 +36,8 @@ public interface Constants {
 
 	public static final int MAX_AUTOMATED_REQUESTS = 10;
 
+	// MAX timeout while handling <meta http-equiv="refresh" content="timeout; url=url">
+	public static final int MAX_REFRESH_TIMEOUT = 15;
+	
+
 }

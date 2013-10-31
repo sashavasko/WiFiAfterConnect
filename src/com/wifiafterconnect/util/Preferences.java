@@ -68,5 +68,9 @@ public class Preferences {
 		}
 		return url;
 	} 
+	
+	public static boolean getWISPrEnabled() {
+		return false;
+	}
 
 }

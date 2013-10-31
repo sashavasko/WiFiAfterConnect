@@ -26,17 +26,57 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import com.wifiafterconnect.util.Logger;
+import com.wifiafterconnect.util.Preferences;
 import com.wifiafterconnect.util.Worker;
 
 import android.content.Context;
 
 public class URLRedirectChecker extends Worker{
-	private URL urlToCheckHttp;
-	@SuppressWarnings("unused")
-	private URL urlToCheckHttps;
-
+	
+	/* storing IP address saves on a number of roundtrips for ip lookup */
+	public static class CachedURL {
+		private InetAddress address = null;
+		private String hostname = "";
+		private URL url = null;
+		
+		public void setURL (URL newURL) {
+			url = newURL;
+			try {
+				if (address == null || !hostname.equals (newURL.getHost())) {
+					hostname = newURL.getHost();
+					address = lookupHost (hostname);
+				}
+			} catch (NullPointerException e) {
+			}
+			if (address != null) {
+				try {
+					url = new URL (url.getProtocol(), address.getHostAddress(), url.getPort(), url.getFile());
+				} catch (MalformedURLException e) {
+				}
+			}
+				
+		}
+		
+		public URL getURL () {
+			return url;
+		}
+	}
+	
+	private static CachedURL urlToCheckHttp;
+	private static CachedURL urlToCheckHttps;
+	
 	public enum AuthorizationType {
 		None, IfNeeded, Force;
 	}
@@ -46,19 +86,59 @@ public class URLRedirectChecker extends Worker{
 	private void initURLs () {
 		if (getContext() == null) {
 			try {
-				urlToCheckHttp = new URL(Constants.URL_TO_CHECK_HTTP);
-				urlToCheckHttps = new URL(Constants.URL_TO_CHECK_HTTPS);
+				urlToCheckHttp.setURL(new URL(Constants.URL_TO_CHECK_HTTP));
+				urlToCheckHttps.setURL(new URL(Constants.URL_TO_CHECK_HTTPS));
 			} catch (MalformedURLException e) {
 				exception (e);
 			}
 		}else {
-			urlToCheckHttp = prefs.getURLToCheckHttp();
-			urlToCheckHttps = prefs.getURLToCheckHttps();
+			urlToCheckHttp.setURL(prefs.getURLToCheckHttp());
+			urlToCheckHttps.setURL(prefs.getURLToCheckHttps());
 		}
 	}
 	
 	static {
 		CookieHandler.setDefault (new CookieManager (null, CookiePolicy.ACCEPT_ALL));
+		urlToCheckHttp = new CachedURL();
+		urlToCheckHttps = new CachedURL();
+		// we cannot follow the redirects as we need the WISPr data. 
+		// If no WISPr detected then redirects will be followed while authenticating 
+		HttpURLConnection.setFollowRedirects(!Preferences.getWISPrEnabled());
+		
+		try {
+			TrustManager[] trustAllCerts = { new X509TrustManager() {
+				@Override
+				public X509Certificate[] getAcceptedIssuers() { 
+					return null;
+				}
+				
+				@Override
+				public void checkClientTrusted(X509Certificate[] chain,
+						String authType) throws CertificateException {
+					// TODO Auto-generated method stub
+					
+				}
+
+				@Override
+				public void checkServerTrusted(X509Certificate[] chain,
+						String authType) throws CertificateException {
+					// TODO Auto-generated method stub
+					
+				}
+			} };
+			SSLContext sc = SSLContext.getInstance("SSL");
+			HostnameVerifier hv = new HostnameVerifier() {
+				@Override
+				public boolean verify(String hostname, SSLSession session) {
+					return true;
+				}
+			};
+			sc.init(null, trustAllCerts, new SecureRandom());
+			 
+			HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+			HttpsURLConnection.setDefaultHostnameVerifier(hv);
+			} catch (Exception localException) {
+			}		
 	}
 	
 	public URLRedirectChecker(Logger logger, Context context) {
@@ -122,7 +202,7 @@ public class URLRedirectChecker extends Worker{
         }
     }
 
-	public InetAddress lookupHost(String hostname) {
+	public static InetAddress lookupHost(String hostname) {
         InetAddress inetAddress[];
         try {
             inetAddress = InetAddress.getAllByName(hostname);
@@ -149,8 +229,14 @@ public class URLRedirectChecker extends Worker{
 		//if (proto < 0 || proto >= protocols.length)			return false;
 		//String protocol = protocols[proto];
 		boolean success = false;
+		
+		/* per WISPR 2.0 specs #7.7 must use HTTP for initial get
+		 * This may not be optimal for other gateways as they redirect to HTTPS for authentication
+		 */
+		
 		if (url == null)
-			url = urlToCheckHttp;
+			url = urlToCheckHttp.getURL(); 
+			
 		
 		try {
 			
@@ -183,19 +269,26 @@ public class URLRedirectChecker extends Worker{
 		    }else if (!(field = parsed.getHttpHeader(ParsedHttpInput.HTTP_HEADER_LOCATION)).isEmpty()){
 		    	redirectURL = new URL (field);
 		    }else if (parsed.hasMetaRefresh()) {
-		    	redirectURL = new URL(parsed.getMetaRefreshURL());
+		    	redirectURL = parsed.getMetaRefresh().getURL();
 		    }else
 		    	success = true;
 
 		    if (redirectURL != null) {
 		    	if (!redirectURL.getHost().equals(parsed.getURL().getHost())) {
 		    		debug("Redirected to  [" + redirectURL + "]. Explicit handling needed.");
-		    		setSaveLogFile (redirectURL);
 		    		if (!redirectURL.getProtocol().equals(url.getProtocol())) {
 		    			debug("protocol has changed!");
 		    		}
-		    		if (doAuthorize != AuthorizationType.None)
-		    			success = checkHttpConnection (redirectURL, AuthorizationType.Force);
+		    		if (doAuthorize != AuthorizationType.None) {
+			    		setSaveLogFile (redirectURL);
+			    		
+			    		debug("WISPr = [" + parsed.getWISPr() + "]");
+			    		
+		    			if (!Preferences.getWISPrEnabled() || parsed.getWISPr() == null)
+		    				success = checkHttpConnection (redirectURL, AuthorizationType.Force);
+		    			else
+		    				success = attemptAuthorization (parsed);
+		    		}
 		    	} else {
 			    	// something wicked happened otherwise
 		    		error("Unexpected redirect URL  [" + redirectURL + "] - giving up.");
@@ -214,13 +307,13 @@ public class URLRedirectChecker extends Worker{
 	}
 	
 	public boolean checkHttpConnection () {
-		boolean success = checkHttpConnection (urlToCheckHttp, defaultType);
+		boolean success = checkHttpConnection (urlToCheckHttp.getURL(), defaultType);
 		debug("Internet connection is " + (success ? "Available" : "Blocked by Captive portal"));
 		return success;
 	}
 
 	public boolean checkHttpConnection (AuthorizationType authType) {
-		boolean success = checkHttpConnection (urlToCheckHttp, authType);
+		boolean success = checkHttpConnection (urlToCheckHttp.getURL(), authType);
 		debug("Internet connection is " + (success ? "Available" : "Blocked by Captive portal"));
 		return success;
 	}
