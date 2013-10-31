@@ -25,6 +25,7 @@ import com.wifiafterconnect.WifiAuthParams;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
@@ -37,10 +38,14 @@ public class HtmlForm {
 	protected String method;
 	protected URL actionURL;
 	protected Map<String, HtmlInput> inputs = new HashMap<String,HtmlInput>();
+	// This will store inputs in the same order they are found in original HTML
+	protected ArrayList<HtmlInput> inputsList = new ArrayList<HtmlInput>();
 	
 	public void addInput (HtmlInput i) {
-		if (i != null && i.isValid())
+		if (i != null && i.isValid()) {
 			inputs.put (i.getName(), i);
+			inputsList.add (i);
+		}
 	}
 	
 	HtmlForm (Element e) {
@@ -116,7 +121,7 @@ public class HtmlForm {
 	
 	public String formatPostData () {
 		StringBuilder postData = new StringBuilder();
-		for (HtmlInput i :inputs.values()) {
+		for (HtmlInput i :inputsList) {
 			i.formatPostData(postData.append('&'));
 		}
 		if (postData.length() > 0) {
@@ -162,7 +167,7 @@ public class HtmlForm {
 	
 	public WifiAuthParams fillParams (WifiAuthParams params) {
 		
-		for (HtmlInput i :inputs.values()) {
+		for (HtmlInput i :inputsList) {
 			if (!i.isHidden()) {
 				HtmlInput param = new HtmlInput (i);
 				if (params == null)
