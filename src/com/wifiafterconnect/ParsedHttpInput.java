@@ -34,10 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSession;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -46,18 +42,12 @@ import android.util.Log;
 import com.wifiafterconnect.handlers.CaptivePageHandler;
 import com.wifiafterconnect.html.HtmlForm;
 import com.wifiafterconnect.html.HtmlPage;
+import com.wifiafterconnect.html.WISPAccessGatewayParam;
 import com.wifiafterconnect.util.HttpInput;
+import com.wifiafterconnect.util.Preferences;
 import com.wifiafterconnect.util.Worker;
 
 public class ParsedHttpInput extends Worker{
-
-	public class NullHostNameVerifier implements HostnameVerifier {
-
-	    public boolean verify(String hostname, SSLSession session) {
-	        //Log.i("RestUtilImpl", "Approving certificate for " + hostname);
-	        return true;
-	    }
-	}
 
 	public class JsonInput extends HttpInput {
 		private JSONObject json = null;
@@ -95,13 +85,12 @@ public class ParsedHttpInput extends Worker{
 	public static final String HTTP_HEADER_LOCATION = "Location";
 	// Yes, we are dirty liars
 	public static final String HTTP_USER_AGENT = "Mozilla/5.0 (Android; Mobile; rv:24.0) Gecko/20100101 Firefox/24.0";
+	public static final String HTTP_ACCEPT = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
 	
 
 	public ParsedHttpInput (Worker other, URL url, String html) {
 		super (other);
 		parse (url, html);
-		if (url.getProtocol().equals("https"))
-			HttpsURLConnection.setDefaultHostnameVerifier(new NullHostNameVerifier());
 	}
 
 	private void addHttpHeader (final String key, final String value) {
@@ -193,7 +182,8 @@ public class ParsedHttpInput extends Worker{
 	public ParsedHttpInput handleAutoRedirects (int maxRequests, boolean authFollowup) {
 
 		debug ("handleAutoRedirects(): this = " + this + " max Requests = " + maxRequests + " authFollowup = " + authFollowup);
-		if (maxRequests <= 0)
+		if (maxRequests <= 0 
+				|| (Preferences.getWISPrEnabled() && getWISPr() != null)) // per WISPr 2.0 spec 7.3.3
 			return this;
 		
 		ParsedHttpInput result = null;
@@ -255,15 +245,22 @@ public class ParsedHttpInput extends Worker{
 		return hp != null && hp.hasMetaRefresh();
 	}
 
-	public String getMetaRefreshURL() {
+	public HtmlPage.MetaRefresh getMetaRefresh() {
 		HtmlPage hp = getHtmlPage();
-		return hp != null ? hp.getMetaRefreshURL() : null;
+		return hp != null ? hp.getMetaRefresh() : null;
 	}
 	
 	public boolean isKnownCaptivePortal() { 
 		return (captiveHandler != null);
 	}
 
+	/* ###################################################### 
+	 * The Captive Portal check code from android. Unlike them,
+	 * we actually need the portal page, so that we can post a response.
+	 * 
+	 * Copyright (C) 2012 The Android Open Source Project
+	 * Licensed under the Apache License, Version 2.0 (the "License");
+	 */
 	public static InetAddress lookupHost(String hostname) {
         InetAddress inetAddress[];
         try {
@@ -277,6 +274,9 @@ public class ParsedHttpInput extends Worker{
         }
         return null;
     }
+	/* ======================================================
+	 * End of the The Captive Portal check code from android
+	 */
 	
 	public URL getFormPostURL() {
 		HtmlPage hp = getHtmlPage();
@@ -290,6 +290,11 @@ public class ParsedHttpInput extends Worker{
 		return getURL();
 	}
 
+	public WISPAccessGatewayParam getWISPr() {
+		HtmlPage hp = getHtmlPage();
+		return (hp != null) ? hp.getWISPr() : null;
+	}
+	
 	public String getCookies() {
 		// TODO Auto-generated method stub
 		return null;
@@ -319,21 +324,24 @@ public class ParsedHttpInput extends Worker{
 	}
 	
 	public ParsedHttpInput getRefresh (String urlString) {
-		if (urlString == null)
-			urlString = getMetaRefreshURL();
 		URL url = null;
-		try {
-			url = new URL (urlString);
-		} catch (MalformedURLException e) {
+		if (httpInput != null) {
 			try {
-				url = new URL(getURL().getProtocol(), getURL().getAuthority(), urlString);
+				HtmlPage.MetaRefresh metaRefresh;
+				if (urlString != null)
+					url = httpInput.makeURL(urlString);
+				else if ((metaRefresh = getMetaRefresh()) != null){
+					url = metaRefresh.getURL();
+					if (url != null && metaRefresh.getTimeout() > 0) {
+						try {	Thread.sleep(1000 * Math.min(metaRefresh.getTimeout(),Constants.MAX_REFRESH_TIMEOUT)); } 
+						catch (InterruptedException e) {} // don't care
+					}
+				}
 			} catch (MalformedURLException ee) {
 				exception(ee);
-				return null;
 			}
 		}
-		
-		return get (this, url, getURL().toString());
+		return url == null ?  null : get (this, url, getURL().toString());
 	}
 	
 	public static void  showRequestProperties (Worker context, HttpURLConnection conn) {
@@ -362,6 +370,7 @@ public class ParsedHttpInput extends Worker{
 		HttpURLConnection conn = null;
 		try {
 			URL postURL = url;
+			/*
 			int port = url.getPort(); 
 			if (port > 0 && port < 1000 && port != 80 && port != 443) 
 			{
@@ -374,7 +383,7 @@ public class ParsedHttpInput extends Worker{
 					}
 				}
 			}
-
+			 */
 			context.debug("Post URL = [" + postURL + "]");
 			conn = (HttpURLConnection) postURL.openConnection();
 			conn.setConnectTimeout(Constants.SOCKET_TIMEOUT_MS);
@@ -385,12 +394,14 @@ public class ParsedHttpInput extends Worker{
 			
 			// we need the next two to avoid 404 code on non-standard ports : 
 			conn.setRequestProperty("User-Agent",HTTP_USER_AGENT);
-			conn.setRequestProperty("Accept","*/*");
+			conn.setRequestProperty("Accept", HTTP_ACCEPT);
 			conn.setRequestProperty("Content-Type","application/x-www-form-urlencoded");
-			conn.setRequestProperty("charset", "utf-8");
+			//conn.setRequestProperty("charset", "utf-8");
             conn.setRequestProperty("Content-Length", Integer.toString(postDataString.getBytes().length));
-			if (referer != null)
+			conn.setRequestProperty("Origin", url.getProtocol() + "://" + url.getHost() + ":" + url.getPort());
+			if (referer != null) {
 				conn.setRequestProperty("Referer",referer);
+			}
 			if (cookies != null)
 				conn.setRequestProperty("Cookie", cookies);
 			
@@ -403,7 +414,7 @@ public class ParsedHttpInput extends Worker{
 			output.flush();
 			output.close();
 			context.debug("Data posted, checking result ...");
-			return receive(context, conn, url);
+			return receive(context, conn);
 		}catch ( ProtocolException e)
 		{
 			context.exception (e);
@@ -459,10 +470,6 @@ public class ParsedHttpInput extends Worker{
 	}
 	
 	public static ParsedHttpInput receive (Worker creator, HttpURLConnection conn) {
-		return receive (creator, conn, conn.getURL());
-	}
-	
-	public static ParsedHttpInput receive (Worker creator, HttpURLConnection conn, URL url) {
 		ParsedHttpInput parsed = null;
 		int totalBytesIn = 0;
 		try {
@@ -488,7 +495,7 @@ public class ParsedHttpInput extends Worker{
 			
 			showReceivedConnection (creator, conn, total.toString(), totalBytesIn);
 			
-			parsed = new ParsedHttpInput(creator, url, total.toString());
+			parsed = new ParsedHttpInput(creator, conn.getURL(), total.toString());
 			String field = null;
 			for (int pos = 0 ; (field = conn.getHeaderField(pos)) != null ; ++pos )
 				parsed.addHttpHeader(conn.getHeaderFieldKey(pos), field);

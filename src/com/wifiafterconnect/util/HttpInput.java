@@ -4,6 +4,7 @@
 package com.wifiafterconnect.util;
 
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
 
@@ -51,6 +52,16 @@ public class HttpInput {
 			}
 		}
 		return null;
+	}
+	
+	public URL makeURL (String urlString) throws MalformedURLException {
+		if (urlString == null || urlString.isEmpty())
+			return null;
+		try {
+			return new URL (urlString);
+		} catch (MalformedURLException e) {
+			return new URL(getURL().getProtocol(), getURL().getAuthority(), urlString);
+		}
 	}
 
 }

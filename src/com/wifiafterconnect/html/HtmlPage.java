@@ -15,6 +15,7 @@
  */
 package com.wifiafterconnect.html;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,11 +25,11 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Comment;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-
+import org.jsoup.nodes.Node;
 import android.util.Log;
-
 import com.wifiafterconnect.Constants;
 import com.wifiafterconnect.util.HttpInput;
 
@@ -39,9 +40,39 @@ public class HtmlPage extends HttpInput {
 	
 	private String onLoad = "";
 	private String title = "";
+	private WISPAccessGatewayParam wISPr = null;
 	
 	private Map<String,String> namedMetas = new HashMap<String,String>();
 	private Map<String,String> httpEquivMetas = new HashMap<String,String>();
+	
+	public class MetaRefresh {
+		private int timeout = 0;
+		private String url = null;
+		
+		public MetaRefresh (String source) {
+			int start = source.toLowerCase(Locale.ENGLISH).indexOf("url=");
+			if (start >= 0)
+				url = source.substring(start+4);
+			if (start > 2) {
+				int end = source.indexOf(';');
+				if (end > 0)
+					timeout = Integer.parseInt(source.substring(0, end));
+			}
+		}
+		
+		public int getTimeout () {
+			return timeout;
+		}
+		
+		public String getURLString () {
+			return url == null ? "" : url;
+		}
+
+		public URL getURL () throws MalformedURLException {
+			return makeURL (url);
+		}
+	}
+	
 	
 	public HtmlPage (URL url){
 		super (url);
@@ -118,13 +149,30 @@ public class HtmlPage extends HttpInput {
     		}
     	}
 		
+		for(Element e : doc.getAllElements()){
+	        for(Node n: e.childNodes()){
+	            if(n instanceof Comment){
+	            	String commentData = ((Comment)n).getData(); 
+	            	if (commentData.startsWith("<?xml")) {
+	            		WISPAccessGatewayParam wp = WISPAccessGatewayParam.parse(commentData);
+	            		if (wp != null)
+	            			wISPr = wp;
+	            	}
+	            }
+	        }
+	    }
+		
 		return true;
 	}
 	
 	public String getOnLoad() {
 		return onLoad;
 	}
-	
+
+	public WISPAccessGatewayParam getWISPr() {
+		return wISPr;
+	}
+
 	// For consistency sake both getForm methods return null if key is bad and don't throw an exception
 	public HtmlForm getForm (int id) {
 		HtmlForm f = null;
@@ -168,17 +216,9 @@ public class HtmlPage extends HttpInput {
 		return httpEquivMetas.containsKey("refresh");
 	}
 	
-	public String getMetaRefreshURL () {
-		String url = null;
-
+	public MetaRefresh getMetaRefresh () {
 		String metaRefresh = httpEquivMetas.get ("refresh");
-		if (metaRefresh != null) {
-			// url= token could be upper/mixed case:
-			int start = metaRefresh.toLowerCase(Locale.ENGLISH).indexOf("url=");
-			if (start >= 0)
-				url = metaRefresh.substring(start+4);
-		}
-		return url;
+		return (metaRefresh != null)? new MetaRefresh(metaRefresh) : null ;
 	}
 	
 	public String getMeta (final String name) {
