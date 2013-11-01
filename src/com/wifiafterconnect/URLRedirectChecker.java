@@ -235,7 +235,7 @@ public class URLRedirectChecker extends Worker{
 		 */
 		
 		if (url == null)
-			url = urlToCheckHttp.getURL(); 
+			url = urlToCheckHttps.getURL(); 
 			
 		
 		try {
