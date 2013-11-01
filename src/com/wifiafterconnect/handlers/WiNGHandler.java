@@ -15,6 +15,7 @@
  */
 package com.wifiafterconnect.handlers;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import com.wifiafterconnect.WifiAuthParams;
@@ -114,7 +115,13 @@ public class WiNGHandler extends CaptivePageHandler implements CaptivePageHandle
 	@Override
 	public URL getPostURL() {
 		// TODO rewrite with values from port/postToURL javascript vars?
-		return super.getPostURL();
+		URL formPostURL = super.getPostURL();
+		try {
+			return new URL (formPostURL.getProtocol(), hsServer, formPostURL.getPort(), formPostURL.getFile());
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			return formPostURL;
+		}
 	}
 
 	@Override
