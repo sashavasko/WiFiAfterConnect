@@ -399,6 +399,7 @@ public class ParsedHttpInput extends Worker{
 			//conn.setRequestProperty("charset", "utf-8");
             conn.setRequestProperty("Content-Length", Integer.toString(postDataString.getBytes().length));
 			conn.setRequestProperty("Origin", url.getProtocol() + "://" + url.getHost() + ":" + url.getPort());
+			conn.setRequestProperty("Connection", "close");
 			if (referer != null) {
 				conn.setRequestProperty("Referer",referer);
 			}
@@ -442,6 +443,7 @@ public class ParsedHttpInput extends Worker{
 				conn.setUseCaches(false);
 				conn.setRequestProperty("User-Agent",HTTP_USER_AGENT);
 				conn.setRequestProperty("Accept","*/*");
+				conn.setRequestProperty("Connection", "close");
 				if (referer != null)
 					conn.setRequestProperty("Referer",referer);
 				
