@@ -35,7 +35,8 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 	private static WifiAuthDatabase instance = null;
 	
 	private static final String DATABASE_NAME = "wifiauth.db";
-	private static final int DATABASE_VERSION = 6;
+	private static final int DATABASE_VERSION = 7;
+
 	public static final String WIFI_TABLE_NAME = "WifiHosts";
 
 	public static final String COLUMN_ID = "_id";
@@ -50,6 +51,10 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 	public static final String COLUMN_PARAM_TYPE = "Type";
 	public static final String COLUMN_PARAM_VALUE = "Value";
 	
+	public static final String KNOWN_SSIDS_TABLE_NAME = "KnownSSIDs";
+
+	public static final String COLUMN_SSID = "SSID";
+
 	public final static String WIFI_HOSTS_CONTENT_TYPE_DIR = "vnd.android.cursor.dir/vnd.wifiafterconnect.wifihosts";
 	
 	/**
@@ -98,6 +103,11 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 				" FOREIGN KEY (" + COLUMN_HOST_ID + ") REFERENCES " + WIFI_TABLE_NAME+ " (" + COLUMN_ID + ") ON DELETE CASCADE," +
 				" UNIQUE (" + COLUMN_ID + ") ON CONFLICT REPLACE)"
 			);
+		db.execSQL("CREATE TABLE " + KNOWN_SSIDS_TABLE_NAME+ " ( " +
+				COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+				COLUMN_SSID + " TEXT, " +
+				" UNIQUE (" + COLUMN_ID + ") ON CONFLICT REPLACE)"
+			);
 		//db.execSQL("insert Into " + WIFI_TABLE_NAME + " values (1,'www.test1.com','uname1','pword1',null,null,null)");
 		//db.execSQL("insert Into " + WIFI_TABLE_NAME + " values (2,'www.test2.com','uname2','pword2',null,null,null)");
 	}
@@ -106,6 +116,8 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if(oldVersion < newVersion){
         	db.execSQL("DROP TABLE IF EXISTS " + WIFI_TABLE_NAME);
+        	db.execSQL("DROP TABLE IF EXISTS " + WIFI_AUTH_PARAMS_TABLE_NAME);
+        	db.execSQL("DROP TABLE IF EXISTS " + KNOWN_SSIDS_TABLE_NAME);
         	onCreate(db);
         }
 	}
@@ -140,6 +152,20 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 			}
 			c.close();
 		}
+		return id;
+	}
+	
+	public long getKnownSSID (final String ssid) {
+		SQLiteDatabase db = getDb();
+		SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
+		builder.setTables(KNOWN_SSIDS_TABLE_NAME);
+		Cursor c;
+		c = builder.query(db, new String[]{COLUMN_ID}, COLUMN_SSID + " = ?", new String[] {ssid}, null, null, null); 
+		long id = -1;
+		if (c.moveToFirst()) {
+			id = c.getLong(0);
+		}
+		c.close();
 		return id;
 	}
 
@@ -264,6 +290,20 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 			}
 		}
 	}
+
+	public boolean isKnownSSID(String ssid) {
+		return getKnownSSID (ssid) >= 0;
+	}
+
+	public void storeSSID(String ssid) {
+		//Log.d(Constants.TAG, "Saving SSID [" + ssid + "]");
+		if (!isKnownSSID(ssid)) {
+			SQLiteDatabase db = getDb();
+			ContentValues values = new ContentValues();
+			values.put(COLUMN_SSID, ssid);
+			db.insert(KNOWN_SSIDS_TABLE_NAME, null, values);
+		}
+	}
 	
 	public void deleteSite (long id) {
 		SQLiteDatabase db = getDb();
@@ -278,4 +318,5 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 	        db.execSQL("PRAGMA foreign_keys=ON;");
 	    }		
 	}
+
 }

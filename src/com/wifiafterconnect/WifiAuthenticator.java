@@ -16,6 +16,7 @@
 
 package com.wifiafterconnect;
 
+import java.net.URISyntaxException;
 import java.net.URL;
 
 import com.wifiafterconnect.URLRedirectChecker.AuthorizationType;
@@ -27,6 +28,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
@@ -210,6 +212,36 @@ public class WifiAuthenticator extends Worker{
 		}
 	}
 
+	/*
+	 * Doing our best showing user the Terms And Conditions page if he/she has not seen it yet.
+	 */
+	public boolean checkTNCShown(ParsedHttpInput parsed) {
+		String ssid = WifiTools.getSSID (getContext());
+		WifiAuthDatabase wifiDb = getDb();
+		if (wifiDb == null || ssid == null || ssid.isEmpty())
+			return true;
+		
+		if (wifiDb.isKnownSSID (ssid))
+			return true;
+		PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
+		Context context = getContext();
+		boolean urlOpened = false;
+		if (pm.isScreenOn() && context != null) {
+			try {
+				debug("TNC not shown previously. Redirecting to page in browser.");
+				Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(parsed.getURL().toURI().toString()));
+				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				context.startActivity(intent);
+				urlOpened = true;
+			} catch (URISyntaxException e) { // don't care
+			}
+		}else {
+			// what should we do when the screen is locked???
+		}
+		wifiDb.storeSSID (ssid);
+		return !urlOpened;
+	}
+
 	public boolean attemptAuthentication (ParsedHttpInput parsedPage, WifiAuthParams authParams) {
 
 		/* Some portals supply as the first page ip, MAC etc 
@@ -228,6 +260,11 @@ public class WifiAuthenticator extends Worker{
 		if (!parsedPage.isKnownCaptivePortal()) {
 			error ("Unknown Captive portal. Aborting.");
 			return false;
+		}
+		
+		if (!checkTNCShown(parsedPage)) {
+			return false; 	// it is the first time that user connected to this SSID , 
+							// so we let them go through the proper web authentication.
 		}
 			
 		debug("Checking for missing inputs at [" + parsedPage.getURL() + "]");
