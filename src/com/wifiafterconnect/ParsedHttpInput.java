@@ -279,15 +279,7 @@ public class ParsedHttpInput extends Worker{
 	 */
 	
 	public URL getFormPostURL() {
-		HtmlPage hp = getHtmlPage();
-		if (hp != null) {
-			HtmlForm form = hp.getForm();
-			if (form != null) {
-				URL url = form.formatActionURL(getURL());
-				return url;
-			}
-		}
-		return getURL();
+		return (captiveHandler != null) ? captiveHandler.getPostURL() : getURL();
 	}
 
 	public WISPAccessGatewayParam getWISPr() {
