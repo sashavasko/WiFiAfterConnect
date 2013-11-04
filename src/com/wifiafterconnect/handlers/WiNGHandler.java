@@ -132,4 +132,10 @@ public class WiNGHandler extends CaptivePageHandler implements CaptivePageHandle
 		//form.setInputValue ("f_agree", "Yes");
 	}
 
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return "WiNG{hs_server={" +hsServer + "}, qV={" + qV + "}}";
+	}
+
 }
