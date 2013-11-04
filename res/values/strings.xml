@@ -11,7 +11,7 @@
     <string name="pref_saveLogFileEnable">pref_saveLogFileEnable</string>
     <string name="pref_saveLogDir">pref_saveLogDir</string>
     <string name="pref_group_locked">When screen is locked</string>
-    <string name="pref_check_autodisable_wifi">Auto-disable wifi</string>
+    <string name="pref_check_autodisable_wifi">Auto-disable WiFi</string>
     <string name="pref_check_autodisable_wifi_summary">Post notification about disabled WiFi allowing to re-enable it when screen is unlocked</string>
     <string name="pref_lockedAutoDisableWifi">pref_lockedAutoDisableWifi</string>
     <string name="pref_check_reenable_wifi_quiet">Quietly re-enable WiFi</string>

@@ -6,7 +6,7 @@
     <string name="save_password_label">Save password</string>
     <string name="cancel_label">Cancel</string>
     <string name="auth_label">Authenticate</string>
-    <string name="auth_required_label">Wifi requires authentication. Please enter your credentials below.</string>
+    <string name="auth_required_label">WiFi requires authentication. Please enter your credentials below.</string>
     <string name="save_password_note"> (Please note that saved password could be compromised if your device falls in to the wrong hands)</string>
     <string name="auth_now_label">Authenticate now</string>
     <string name="auth_now_disabled_label">WiFi not connected</string>
