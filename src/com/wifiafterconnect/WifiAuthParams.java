@@ -73,4 +73,20 @@ public class WifiAuthParams {
   	   	}
   	   	return null;
 	}
+
+	@Override
+	public String toString() {
+		String s = "<WifiAuthParams authAction=\"" + authAction + 
+				"\" wifiAction=\"" + wifiAction + 
+				"\" savePassword=\"" + savePassword +
+				"\">";
+		for (HtmlInput i : fields.values())
+			s += i;
+		s += "</WifiAuthParams>";
+		return s;
+	}
+	
+	public static String toString (WifiAuthParams params) {
+		return params == null ? "(null)": params.toString();
+	}
 }
