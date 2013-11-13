@@ -20,6 +20,7 @@ import org.jsoup.nodes.Element;
 
 import android.util.Log;
 
+import com.wifiafterconnect.BuildConfig;
 import com.wifiafterconnect.Constants;
 import com.wifiafterconnect.WifiAuthParams;
 
@@ -50,15 +51,20 @@ public class HtmlForm {
 	
 	HtmlForm (Element e) {
 		id = e.attr("id");
-		action = e.attr("action");
-		try {
-			actionURL = new URL(action);
-		} catch (MalformedURLException ex) {actionURL = null;}
+		setAction(e.attr("action"));
 
 		method = e.attr("method");
     	for (Element ie : e.getElementsByTag("input")) {
-    		Log.d(Constants.TAG, "Parsing html: form input found : " + ie.toString());
-    		addInput(new HtmlInput (ie));
+    		if (BuildConfig.DEBUG)
+    			Log.d(Constants.TAG, "Parsing html: form input found : " + ie.toString());
+    		boolean hidden = false;
+    		for (Element parent = ie.parent(); parent != e ; parent = parent.parent())
+    			// this weirdness is used in Colubris (now owned by HP) portals:
+    			if (parent.hasClass("hidedata")|| parent.hasClass("hidden")) {
+    				hidden = true;
+    				break;
+    			}
+    		addInput(new HtmlInput (ie, hidden));
     	}
 	}
 	
@@ -122,7 +128,7 @@ public class HtmlForm {
 	public String formatPostData () {
 		StringBuilder postData = new StringBuilder();
 		for (HtmlInput i :inputsList) {
-			i.formatPostData(postData.append('&'));
+			i.formatPostData(postData);
 		}
 		if (postData.length() > 0) {
 			if (postData.charAt(0) == '&')
@@ -145,6 +151,8 @@ public class HtmlForm {
 				file = actionURL.getFile();
 				ref = actionURL.getRef();
 			}else {
+				if (file.isEmpty())
+					file = originalURL.getPath(); //ignore query of original url
 				protocol = originalURL.getProtocol();
 			}
 			if (authority == null)
@@ -155,7 +163,8 @@ public class HtmlForm {
 				urlString += file;
 			if (ref != null)
 				urlString += "#" + ref;
-
+			if (BuildConfig.DEBUG)
+				Log.d(Constants.TAG, "actionURL string = [" + urlString + "]");
 			try {
 				result = new URL (urlString);
 			} catch (MalformedURLException e) {	}
@@ -205,7 +214,12 @@ public class HtmlForm {
 		}		
 		return !missingValues && hasSubmit;
 	}
-	
 
+	public void setAction(String switchUrl) {
+		action = (switchUrl == null)? "" : switchUrl;
+		try {
+			actionURL = new URL(action);
+		} catch (MalformedURLException ex) {actionURL = null;}
+	}
 
 }
