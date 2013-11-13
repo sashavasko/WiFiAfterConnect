@@ -19,6 +19,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.wifiafterconnect.html.HtmlInput;
 import com.wifiafterconnect.util.Logger;
@@ -147,7 +148,7 @@ public class WifiAuthenticatorActivity extends FragmentActivity
   	   	String html = intent.getStringExtra (WifiAuthenticator.OPTION_PAGE);
   	   	
   	   	wifiAuth = new WifiAuthenticator (new Worker (new Logger (intent), this), url);
-  	   	parsedPage = new ParsedHttpInput (wifiAuth, url, html);
+  	   	parsedPage = new ParsedHttpInput (wifiAuth, url, html, new HashMap<String,String>());
   	   	authParams = wifiAuth.getStoredAuthParams();
    		authParams = parsedPage.addMissingParams(authParams);
    		
