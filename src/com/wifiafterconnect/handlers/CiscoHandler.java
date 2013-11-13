@@ -30,6 +30,21 @@ public class CiscoHandler extends CaptivePageHandler implements CaptivePageHandl
 	 * See CISCO docs at http://www.cisco.com/en/US/docs/wireless/controller/7.3/configuration/guide/b_wlc-cg_chapter_01011.html
 	 */
 
+	private String switchUrl = null;
+	private String redirect = null;
+	
+	@Override
+	public void setPage(HttpInput page) {
+		super.setPage(page);
+		switchUrl = page.getURLQueryVar("switch_url");
+		redirect =  page.getURLQueryVar("redirect");
+		if (switchUrl != null) {
+			HtmlForm form = getLoginForm();
+			form.setAction (switchUrl);
+		}
+	}
+
+	
 	/* (non-Javadoc)
 	 * @see com.wifiafterconnect.handlers.CaptivePageHandler#checkParamsMissing(com.wifiafterconnect.WifiAuthenticator.WifiAuthParams)
 	 */
@@ -48,7 +63,9 @@ public class CiscoHandler extends CaptivePageHandler implements CaptivePageHandl
 	@Override
 	public void validateLoginForm(WifiAuthParams params, HtmlForm form) {
 		// this could be different if submitAction script altered from Cisco's sample :
-		form.setInputValue ("buttonClicked", "4"); 
+		form.setInputValue ("buttonClicked", "4");
+		if (redirect != null && !redirect.isEmpty())
+			form.setInputValue ("redirect_url", redirect);
 	}
 
 
