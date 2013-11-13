@@ -23,6 +23,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import com.wifiafterconnect.BuildConfig;
+
 import android.content.Intent;
 import android.util.Log;
 
@@ -70,11 +72,13 @@ public class Logger {
 	}
 	
 	public void debug ( String s) {
-		if (logFile == null)
-			Log.d(getTag(), s);
-		else {
-			logFile.println(s);
-			logFile.flush();
+		if (BuildConfig.DEBUG) {
+			if (logFile == null)
+				Log.d(getTag(), s);
+			else {
+				logFile.println(s);
+				logFile.flush();
+			}
 		}
 	}
 

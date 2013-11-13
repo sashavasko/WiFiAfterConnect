@@ -140,7 +140,7 @@ public class HtmlPage extends HttpInput {
 		}
 
 		for (Element ie : content.getElementsByTag("input")) {
-    		HtmlInput i = new HtmlInput (ie);
+    		HtmlInput i = new HtmlInput (ie, false);
     		String fid = i.getFormId();
     		if (!fid.isEmpty()) {
     			HtmlForm f = namedForms.get(fid);
