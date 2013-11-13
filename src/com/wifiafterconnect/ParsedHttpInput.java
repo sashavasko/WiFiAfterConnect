@@ -80,7 +80,7 @@ public class ParsedHttpInput extends Worker{
 	
 	private CaptivePageHandler captiveHandler = null;
 	private HttpInput httpInput = null;
-	private Map<String,String> httpHeaders = new HashMap<String,String>();
+	private Map<String,String> httpHeaders;
 	
 	public static final String HTTP_HEADER_LOCATION = "Location";
 	// Yes, we are dirty liars
@@ -88,13 +88,10 @@ public class ParsedHttpInput extends Worker{
 	public static final String HTTP_ACCEPT = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
 	
 
-	public ParsedHttpInput (Worker other, URL url, String html) {
+	public ParsedHttpInput (Worker other, URL url, String html, Map<String,String> headers) {
 		super (other);
+		httpHeaders = headers;
 		parse (url, html);
-	}
-
-	private void addHttpHeader (final String key, final String value) {
-		httpHeaders.put (key, value);
 	}
 
 	private void parse(URL url, String input) {
@@ -450,10 +447,10 @@ public class ParsedHttpInput extends Worker{
 		return null;
 	}
 
-	private static void showReceivedConnection (Worker context, HttpURLConnection conn, String data, int totalBytesIn) {
+	private static void showReceivedConnection (Worker context, HttpURLConnection conn, String data, int totalBytesIn, Map <String,String> headers) {
 		String field = null;
-		for (int pos = 0 ; (field = conn.getHeaderField(pos)) != null ; ++pos )
-			context.debug("Field["+pos+"("+conn.getHeaderFieldKey(pos)+")] = [" + field + "]");
+		for (String key : headers.keySet())
+			context.debug("Field["+ key +"("+headers.get(key)+")] = [" + field + "]");
 
 		context.debug ("Read " + totalBytesIn + " bytes:");
 		if (context.isSaveLogToFile()) {
@@ -487,12 +484,15 @@ public class ParsedHttpInput extends Worker{
 				}
 			}
 			
-			showReceivedConnection (creator, conn, total.toString(), totalBytesIn);
-			
-			parsed = new ParsedHttpInput(creator, conn.getURL(), total.toString());
+			Map<String,String> headers = new HashMap<String,String>();
 			String field = null;
 			for (int pos = 0 ; (field = conn.getHeaderField(pos)) != null ; ++pos )
-				parsed.addHttpHeader(conn.getHeaderFieldKey(pos), field);
+				headers.put (conn.getHeaderFieldKey(pos), field);
+			
+			if (BuildConfig.DEBUG)
+				showReceivedConnection (creator, conn, total.toString(), totalBytesIn, headers);
+			
+			parsed = new ParsedHttpInput(creator, conn.getURL(), total.toString(), headers);
 		}catch (IOException e) {
 			creator.error ("Failed to receive from " + conn.toString());
 			creator.exception (e);
