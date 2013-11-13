@@ -53,9 +53,11 @@ public class HtmlInput {
 	private String name;
 	private String type = DEFAULT_TYPE;
 	private String value;
-	private String inputClass;
-	private String onClick;
-	private String form;
+	private String inputClass="";
+	private String onClick="";
+	private String form="";
+	private String checked="";
+	private boolean forceHidden = false;
 
 	public void setType (String type) {
 		this.type = (type == null || type.isEmpty() ? DEFAULT_TYPE : type);
@@ -67,26 +69,30 @@ public class HtmlInput {
 		this.value = value == null ? "" : value;
 	}
 	
-	public HtmlInput (Element e) {
+	public HtmlInput (Element e, boolean hidden) {
 		name = e.attr("name");
 		setType (e.attr("type"));
+		forceHidden = hidden;
 		value = e.attr("value");
 		inputClass = e.attr("class");
 		onClick = e.attr("onClick");
 		form = e.attr("form");
+		checked = e.attr("checked");
 	}
 
 	public HtmlInput (HtmlInput other) {
 		name = other.name;
 		type = other.type;
+		forceHidden = other.forceHidden;
 		value = other.value;
 		inputClass = other.inputClass;
 		onClick = other.onClick;
 		form = other.form;
+		checked = other.checked;
 	}
 
 	public boolean isHidden() {
-		return type.equalsIgnoreCase(TYPE_HIDDEN);
+		return forceHidden || type.equalsIgnoreCase(TYPE_HIDDEN);
 	}
 	
 	public boolean isValid() {
@@ -125,10 +131,12 @@ public class HtmlInput {
 		// TODO: Using URLEncoder is probably less efficient then UriBuilder
 		try {
 			if (matchType (HtmlInput.TYPE_IMAGE)) {
-				postData.append("x").append('=').append("1");
-				postData.append("y").append('=').append("1");
+				postData.append("&").append("x").append('=').append("1");
+				postData.append("&").append("y").append('=').append("1");
+			}else if (matchType (HtmlInput.TYPE_RADIO) && checked.isEmpty()) {
+				// ignore unchecked radio buttons
 			}else
-				postData.append(name).append('=').append(URLEncoder.encode(value,"UTF-8"));
+				postData.append("&").append(name).append('=').append(URLEncoder.encode(value,"UTF-8"));
 		} catch (UnsupportedEncodingException e) {
 			// should never get here
 		}
@@ -153,6 +161,15 @@ public class HtmlInput {
     	else if (matchType (TYPE_TIME))
     		return InputType.TYPE_CLASS_DATETIME|InputType.TYPE_DATETIME_VARIATION_TIME;
     	return 0;
+	}
+
+	@Override
+	public String toString() {
+		return "<input name=\"" + name + 
+				"\" type=\"" + (isHidden() ? TYPE_HIDDEN : type) + 
+				"\" value=\"" + value + "\" class=\"" + inputClass + 
+				"\" onClick=\"" + onClick + "\" form=\"" + form + 
+				"\" checked=\"" + checked + "\">";
 	}
 	
 }
