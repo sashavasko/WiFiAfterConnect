@@ -18,7 +18,6 @@ package com.wifiafterconnect.util;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -45,10 +44,9 @@ public class Logger {
 		this.tag = intent.getStringExtra(OPTION_LOGGER_TAG);
 		String filePath =intent.getStringExtra(OPTION_LOGGER_FILE); 
 		if (filePath != null && !filePath.isEmpty()){
-			file = new File (filePath);
 			try {
-				logFile = new PrintWriter (file);
-			} catch (FileNotFoundException e) {
+				setLogFile (new File (filePath));
+			} catch (IOException e) {
 				e.printStackTrace();
 			}			
 		}

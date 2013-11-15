@@ -94,11 +94,13 @@ public class HtmlPage extends HttpInput {
 			Log.d(Constants.TAG, "Parsing html: doc == null");
 		  	return false;
 		}    
-		  
-		Element content = doc.getElementById("content");
+		Log.d(Constants.TAG, "Parsing html: doc html == {" + doc.html()  + "}");
+
+		// some portals sneak form to outside of <div id="content"> - the bastards!
+		Element content = doc;/*.getElementById("content");
 		if (content == null) {
 			content = doc;
-		}
+		}*/
 
 		for (Element meta : content.getElementsByTag("meta")) {
 			String c = meta.attr("content");

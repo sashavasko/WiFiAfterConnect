@@ -241,7 +241,6 @@ public class URLRedirectChecker extends Worker{
 		try {
 			
 			//URL url = new URL(protocol + "://www.google.com");
-			debug("Trying [" + url + "]");
 			ParsedHttpInput parsed = null;
 			
 			// due to switching to wifi, name resolution can fail if the timing in just right,
@@ -275,7 +274,7 @@ public class URLRedirectChecker extends Worker{
 
 		    if (redirectURL != null) {
 		    	if (!redirectURL.getHost().equals(parsed.getURL().getHost())) {
-		    		debug("Redirected to  [" + redirectURL + "]. Explicit handling needed.");
+		    		debug("Redirected to  [" + redirectURL + "]. Assuming Internet unavailable - probably a captive portal.");
 		    		if (!redirectURL.getProtocol().equals(url.getProtocol())) {
 		    			debug("protocol has changed!");
 		    		}

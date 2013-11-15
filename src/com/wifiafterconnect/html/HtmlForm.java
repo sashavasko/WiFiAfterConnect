@@ -151,8 +151,20 @@ public class HtmlForm {
 				file = actionURL.getFile();
 				ref = actionURL.getRef();
 			}else {
+				String origPath = originalURL.getPath(); //ignore query of original url 
 				if (file.isEmpty())
-					file = originalURL.getPath(); //ignore query of original url
+					file = origPath;
+				else if (!file.contains("/")) {
+					String[] parts = origPath.split("[/]");
+					parts[parts.length-1] = file;
+					file = "";
+					for (int i = 0; i < parts.length ; ++i ){
+						file += parts[i];
+						if (i  < parts.length - 1)
+							file += "/";
+					}
+				}
+					
 				protocol = originalURL.getProtocol();
 			}
 			if (authority == null)
@@ -179,8 +191,6 @@ public class HtmlForm {
 		for (HtmlInput i :inputsList) {
 			if (!i.isHidden()) {
 				HtmlInput param = new HtmlInput (i);
-				if (params == null)
-					params = new WifiAuthParams();
 				params.add(param);
 			}
 		}		
