@@ -37,8 +37,8 @@ public class WanderingWifiHandler extends CaptivePageHandler implements CaptiveP
 	}
 
 	@Override
-	public Boolean detect(HttpInput page) {
-		return (page.getURL().getHost().contains("wanderingwifi") && HtmlPage.getForm(page) != null);
+	public Boolean detect(HttpInput input) {
+		return (input.getURL().getHost().contains("wanderingwifi") && HtmlPage.getForm(input) != null);
 	}
 
 	@Override
@@ -57,6 +57,7 @@ public class WanderingWifiHandler extends CaptivePageHandler implements CaptiveP
 		if (result != null)
 			result = result.handleAutoRedirects(Constants.MAX_AUTOMATED_REQUESTS, true);
 
+		setState (result!=null ? States.Success : States.Failed);
 		return result;
 	}
 

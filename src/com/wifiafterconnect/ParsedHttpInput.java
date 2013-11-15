@@ -122,7 +122,7 @@ public class ParsedHttpInput extends Worker{
 		}
 
 		if (captiveHandler != null)
-			debug("Detected Captive portal "+ captiveHandler);
+			debug("Detected page handler "+ captiveHandler);
 		
 		// Fallback - plain text container
 		if (httpInput == null){
@@ -151,11 +151,15 @@ public class ParsedHttpInput extends Worker{
 		return val == null ? "" : val;
 	}
 	
+	public HtmlForm getHtmlForm () {
+		HtmlPage hp = getHtmlPage();
+		return  hp != null ? hp.getForm() : null;
+	}
+	
 	public String buildPostData (final WifiAuthParams authParams) {
 		if (captiveHandler != null)
 			return captiveHandler.getPostData(authParams);
-		HtmlPage hp = getHtmlPage();
-		HtmlForm form = hp != null ? hp.getForm() : null;
+		HtmlForm form = getHtmlForm ();
 		if (form != null)
 			return form.formatPostData();
 		
@@ -192,7 +196,7 @@ public class ParsedHttpInput extends Worker{
 		}else if (!(redirectLoc = getHttpHeader(ParsedHttpInput.HTTP_HEADER_LOCATION)).isEmpty()){
 			debug("Handling Location redirect ...");
 			result = getRefresh (redirectLoc);
-		}else if (authFollowup && hasMetaRefresh()) {
+		}else if (hasMetaRefresh() && (authFollowup || getHtmlForm () == null)) {
 			debug("Handling meta refresh ...");
 			result = getRefresh (null);
 		}else
@@ -204,10 +208,12 @@ public class ParsedHttpInput extends Worker{
 		return result; 
 	}
 	
-	public boolean authenticateCaptivePortal(WifiAuthParams authParams) {
-		if (captiveHandler != null)
-			return (captiveHandler.authenticate (this, authParams) != null);
-		return false;
+	public ParsedHttpInput authenticateCaptivePortal(WifiAuthParams authParams) {
+		return (captiveHandler != null) ? captiveHandler.authenticate (this, authParams) : null;
+	}
+	
+	public CaptivePageHandler.States getCaptivePortalState () {
+		return (captiveHandler != null)? captiveHandler.getState() : CaptivePageHandler.States.Failed;
 	}
 	
 	public boolean submitOnLoad(HtmlPage hp) {
@@ -448,9 +454,8 @@ public class ParsedHttpInput extends Worker{
 	}
 
 	private static void showReceivedConnection (Worker context, HttpURLConnection conn, String data, int totalBytesIn, Map <String,String> headers) {
-		String field = null;
 		for (String key : headers.keySet())
-			context.debug("Field["+ key +"("+headers.get(key)+")] = [" + field + "]");
+			context.debug("Field["+ key + "] = [" + headers.get(key) + "]");
 
 		context.debug ("Read " + totalBytesIn + " bytes:");
 		if (context.isSaveLogToFile()) {

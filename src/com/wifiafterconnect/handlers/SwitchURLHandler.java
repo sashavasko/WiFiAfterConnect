@@ -5,6 +5,7 @@ package com.wifiafterconnect.handlers;
 
 import com.wifiafterconnect.ParsedHttpInput;
 import com.wifiafterconnect.WifiAuthParams;
+import com.wifiafterconnect.handlers.CaptivePageHandler.States;
 import com.wifiafterconnect.html.HtmlForm;
 import com.wifiafterconnect.html.HtmlPage;
 import com.wifiafterconnect.util.HttpInput;
@@ -42,6 +43,7 @@ public class SwitchURLHandler extends CaptivePageHandler implements CaptivePageH
 		ParsedHttpInput result = parsedPage.getRefresh(parsedPage.getURLQueryVar("switch_url"));
 		if (result != null && result.hasForm())
 			result = null; // something went wrong
+		setState (result!=null ? States.Success : States.Failed);
 		return result;
 	}
 

@@ -26,6 +26,7 @@ import com.wifiafterconnect.WifiAuthParams;
 import android.util.Log;
 
 import com.wifiafterconnect.html.HtmlForm;
+import com.wifiafterconnect.html.HtmlInput;
 import com.wifiafterconnect.html.HtmlPage;
 import com.wifiafterconnect.util.HttpInput;
 
@@ -46,7 +47,8 @@ public abstract class CaptivePageHandler {
 		"WanderingWifiHandler",
 		"SwitchURLHandler",
 //		"AttHandler", Can be handled by GenericHandler
-		"WiNGHandler"
+		"WiNGHandler",
+		"NNUHandler"
 	};
 
 	@SuppressWarnings("unchecked")
@@ -56,7 +58,9 @@ public abstract class CaptivePageHandler {
 		
 		registeredHandlers = new HashMap<String,Class<? extends Detection>>();
 		for (String handlerName : standardHandlers) {
+			Log.d(Constants.TAG, "registering standard handler " + handlerName);
 			try {
+				Log.d(Constants.TAG, "Class " +  (Class<? extends Detection>)Class.forName(CaptivePageHandler.class.getPackage().getName() + '.' + handlerName));
 				registerHandler ((Class<? extends Detection>)Class.forName(CaptivePageHandler.class.getPackage().getName() + '.' + handlerName));
 			} catch (ClassNotFoundException e) {// don't care
 				e.printStackTrace();
@@ -90,12 +94,13 @@ public abstract class CaptivePageHandler {
 		
 		for (Class<? extends Detection> handlerClass : registeredHandlers.values()) {
 			try {
+				Log.d(Constants.TAG, "detecting " + handlerClass.getName());
 				handler = (CaptivePageHandler) handlerClass.newInstance();
 				//Method m = handlerClass.getMethod("detect", HtmlPage.class);
 				//Boolean result = (Boolean)m.invoke(handler, page);
 				Detection d = (Detection)handler;
 				Boolean result = d.detect(input);
-				Log.d(Constants.TAG, "detecting " + handlerClass.getName() + " result = " + result);
+				Log.d(Constants.TAG, " result = " + result);
 				if (result)
 					break;
 				handler = null;
@@ -110,6 +115,7 @@ public abstract class CaptivePageHandler {
 				e.printStackTrace();
 //			} catch (InvocationTargetException e) {		e.printStackTrace();
 			} catch (NullPointerException e) { // ignore
+				e.printStackTrace();
 			}
 		}
 		if (handler == null)
@@ -120,14 +126,43 @@ public abstract class CaptivePageHandler {
 	}
 	
 	
-	protected HttpInput page = null;
+	public enum States {
+		Normal,	HandleRedirects, HandleRedirectsAll, Failed, Success;  
+	}
 	
-	public void setPage (HttpInput page) {
+	protected HttpInput page = null;
+	protected States state = States.Normal;
+	
+	protected void setPage (HttpInput page) {
 		this.page = page;
 	}
 	
-	public abstract boolean checkParamsMissing (WifiAuthParams params);
-	public abstract void validateLoginForm (WifiAuthParams params, HtmlForm form);
+	protected void setState (States state) {
+		this.state = state;
+	}
+	
+	public States getState () {
+		return state;
+	}
+	
+	public boolean checkParamsMissing (WifiAuthParams params){
+		WifiAuthParams allParams = addMissingParams(params);
+		if (allParams != null) {
+			for (HtmlInput i : allParams.getFields()) {
+				if (i.getValue().isEmpty())
+					return true;
+			}
+		}
+		return false;
+	}
+	
+	
+	public void validateLoginForm (WifiAuthParams params, HtmlForm form){
+		for (HtmlInput i : form.getInputs()) {
+			if (!i.isHidden() && i.matchType(HtmlInput.TYPE_CHECKBOX) && i.getValue().isEmpty())
+				i.setValue("yes");
+		}
+	}
 	
 	public String getPostData (WifiAuthParams params) {
 		HtmlForm form = getLoginForm();
@@ -168,6 +203,10 @@ public abstract class CaptivePageHandler {
 	
 	public WifiAuthParams addMissingParams (WifiAuthParams params) {
 		HtmlForm form = getLoginForm();
+		Log.d(Constants.TAG, "Adding missing params. Form = " + form);
+		if (params == null)
+			params = new WifiAuthParams();
+
 		if (form != null) 
 			params = form.fillParams (params);
 		return params;
@@ -176,6 +215,7 @@ public abstract class CaptivePageHandler {
 	public ParsedHttpInput authenticate(ParsedHttpInput parsedPage,	WifiAuthParams authParams) {
 		// this works for most captive portals. The weird ones should override this method.
 		ParsedHttpInput result = parsedPage.postForm (authParams);
+		setState (result!=null ? States.Success : States.Failed);
 		return result;
 	}
 	

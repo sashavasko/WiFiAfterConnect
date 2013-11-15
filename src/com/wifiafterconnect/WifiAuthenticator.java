@@ -20,6 +20,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 import com.wifiafterconnect.URLRedirectChecker.AuthorizationType;
+import com.wifiafterconnect.handlers.CaptivePageHandler;
 import com.wifiafterconnect.util.Worker;
 import com.wifiafterconnect.util.WifiTools;
 
@@ -242,45 +243,53 @@ public class WifiAuthenticator extends Worker{
 		return !urlOpened;
 	}
 
-	public boolean attemptAuthentication (ParsedHttpInput parsedPage, WifiAuthParams authParams) {
+	public boolean attemptAuthentication (ParsedHttpInput currentPage, WifiAuthParams authParams) {
 
+		CaptivePageHandler.States captiveState = CaptivePageHandler.States.HandleRedirects; 
 		/* Some portals supply as the first page ip, MAC etc 
 		 * inside of the form that has to be submitted onLoad.
 		 * Wandering WiFi is the worst offender.
 		 */
-		debug("Handling pre-auth redirects. parsedPage = " + parsedPage);
-		// don't want to do meta http-equiv=refresh here as it is used to detect browsers with no JS support
-		// and display error requiring it
-		if ((parsedPage = parsedPage.handleAutoRedirects (Constants.MAX_AUTOMATED_REQUESTS, false)) == null) {
-			error ("Failed to follow the sequence of redirects...");
-			return false;
-		}
-		debug("Done handling pre-auth redirects. parsedPage = " + parsedPage);
-
-		if (!parsedPage.isKnownCaptivePortal()) {
-			error ("Unknown Captive portal. Aborting.");
-			return false;
-		}
-		
-		if (!checkTNCShown(parsedPage)) {
-			return false; 	// it is the first time that user connected to this SSID , 
-							// so we let them go through the proper web authentication.
-		}
+		while (captiveState != CaptivePageHandler.States.Success && captiveState != CaptivePageHandler.States.Failed) {
 			
-		debug("Checking for missing inputs at [" + parsedPage.getURL() + "]");
-		if (authParams == null) {
-			authParams = getStoredAuthParams();
-
-			if (parsedPage.checkParamsMissing(authParams)){
-				requestUserParams (parsedPage);
-				// we will have to try authentication directly from user-facing activity
+			debug("Handling pre-auth redirects. parsedPage = " + currentPage);
+			// don't want to do meta http-equiv=refresh here as it is used to detect browsers with no JS support
+			// and display error requiring it
+			if ((currentPage = currentPage.handleAutoRedirects (Constants.MAX_AUTOMATED_REQUESTS, false)) == null) {
+				error ("Failed to follow the sequence of redirects...");
 				return false;
 			}
-		}	
+			debug("Done handling pre-auth redirects. parsedPage = " + currentPage);
 
-		debug("Attempting authentication at [" + parsedPage.getURL() + "]");
-		boolean success = parsedPage.authenticateCaptivePortal (authParams);
+			if (!currentPage.isKnownCaptivePortal()) {
+				error ("Unknown Captive portal. Aborting.");
+				return false;
+			}
+
+			if (!checkTNCShown(currentPage)) {
+				return false; 	// it is the first time that user connected to this SSID , 
+				// so we let them go through the proper web authentication.
+			}
+
+			debug("Checking for missing inputs at [" + currentPage.getURL() + "]");
+			if (authParams == null) {
+				authParams = getStoredAuthParams();
+
+				if (currentPage.checkParamsMissing(authParams)){
+					requestUserParams (currentPage);
+					// we will have to try authentication directly from user-facing activity
+					return false;
+				}
+			}	
+
+			debug("Attempting authentication at [" + currentPage.getURL() + "]");
+			ParsedHttpInput nextPage = currentPage.authenticateCaptivePortal (authParams);
+			captiveState = (nextPage == null) ? CaptivePageHandler.States.Failed : currentPage.getCaptivePortalState();
+			currentPage = nextPage;
+		}
 		
+		boolean success = (captiveState == CaptivePageHandler.States.Success);
+
 		if (success) {
 			debug("Re-checking connection ...");
 			URLRedirectChecker checker = new URLRedirectChecker (this);

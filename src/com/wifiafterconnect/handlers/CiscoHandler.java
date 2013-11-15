@@ -63,6 +63,7 @@ public class CiscoHandler extends CaptivePageHandler implements CaptivePageHandl
 	@Override
 	public void validateLoginForm(WifiAuthParams params, HtmlForm form) {
 		// this could be different if submitAction script altered from Cisco's sample :
+		super.validateLoginForm(params, form);
 		form.setInputValue ("buttonClicked", "4");
 		if (redirect != null && !redirect.isEmpty())
 			form.setInputValue ("redirect_url", redirect);

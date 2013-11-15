@@ -14,6 +14,7 @@ import android.util.Log;
 import com.wifiafterconnect.Constants;
 import com.wifiafterconnect.ParsedHttpInput;
 import com.wifiafterconnect.WifiAuthParams;
+import com.wifiafterconnect.handlers.CaptivePageHandler.States;
 import com.wifiafterconnect.html.HtmlForm;
 import com.wifiafterconnect.html.HtmlPage;
 import com.wifiafterconnect.util.HttpInput;
@@ -116,7 +117,7 @@ public class TheClubHandler extends CaptivePageHandler implements CaptivePageHan
 			}
 			result = result.getRefresh (authURL); 
 		}
-		
+		setState (result!=null ? States.Success : States.Failed);
 		return result;
 	}
 
