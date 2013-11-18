@@ -28,6 +28,7 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -290,6 +291,9 @@ public class MainActivity extends FragmentActivity implements LoaderCallbacks<Cu
         setContentView(R.layout.main_activity);
         
         toggleWifi = (ToggleButton) findViewById(R.id.toggleWifi);
+//        toggleWifi.setEnabled(checkCallingOrSelfPermission("android.permission.CHANGE_NETWORK_STATE") 
+//        						== PackageManager.PERMISSION_GRANTED);
+        
         buttonAuthenticateNow = (Button) findViewById(R.id.buttonAuthenticateNow);
         
         lvRememberedSites = (ListView) findViewById(R.id.listKnownSites);
