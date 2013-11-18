@@ -65,18 +65,23 @@ public class WifiTools {
 	}
 	
 	public void disableWifi() {
-		if (wifiMan != null)
-			wifiMan.setWifiEnabled(false);
+		setWifiEnabled(false);
 	}
 
 	public void enableWifi() {
-		if (wifiMan != null)
-			wifiMan.setWifiEnabled(true);
+		setWifiEnabled(true);
 	}
 
 	public void setWifiEnabled(boolean enable) {
 		if (wifiMan != null) {
-			wifiMan.setWifiEnabled(enable);
+			try {
+				wifiMan.setWifiEnabled(enable);
+			}catch (SecurityException e) {
+				// Stupid Galaxy Tab requires CHANGE_NETWORK_STATE permission, 
+				// god knows what other devices might have - better add the handler
+				// see http://kmansoft.com/2011/12/05/wifi-manager-2-1-6/
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -85,21 +90,26 @@ public class WifiTools {
 	}
 	
 	public static void disableWifi(Context context) {
-		if (context != null) {
-			WifiManager wifiMan = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
-			if (wifiMan != null)
-				wifiMan.setWifiEnabled(false);
-		}
+		setWifiEnabled(context, false);
 	}
 
 	public static void enableWifi(Context context) {
-		if (context != null) {
-			WifiManager wifiMan = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
-			if (wifiMan != null)
-				wifiMan.setWifiEnabled(true);
-		}
+		setWifiEnabled(context, true);
 	}
 
+	public static void setWifiEnabled(Context context, boolean enable) {
+		if (context != null) {
+			WifiManager wifiMan = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
+			if (wifiMan != null) {
+				try {
+					wifiMan.setWifiEnabled(enable);
+				}catch (SecurityException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
 	public static boolean isWifiEnabled(Context context) {
 		if (context != null) {
 			WifiManager wifiMan = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
