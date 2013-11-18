@@ -30,7 +30,7 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
 		@Override
 		public void onCreate (Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
-			addPreferencesFromResource (R.xml.preferences);
+			addPreferencesFromResource ( BuildConfig.DEBUG ? R.xml.preferences_debug : R.xml.preferences);
 		}
 	}
 	
@@ -46,11 +46,12 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
 		super.onCreate(savedInstanceState);
 		
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
-			addPreferencesFromResource (R.xml.preferences);
+			addPreferencesFromResource ( BuildConfig.DEBUG ? R.xml.preferences_debug : R.xml.preferences);
 		}else {
 			addPreferencesFragment();
 		}
-		PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this); 
+		prefs.registerOnSharedPreferenceChangeListener(this);
 	}
 
 	@Override

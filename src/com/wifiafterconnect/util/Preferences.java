@@ -4,6 +4,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import com.wifiafterconnect.BuildConfig;
 import com.wifiafterconnect.Constants;
 
 import android.content.Context;
@@ -20,6 +21,8 @@ public class Preferences {
 	}
 
 	public boolean getSaveLogToFile () {
+		if (BuildConfig.DEBUG)
+			return false;
 		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
 		return sharedPrefs.getBoolean ("pref_saveLogFileEnable", false);
 	}

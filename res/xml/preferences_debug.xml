@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
-    <CheckBoxPreference android:summary="@string/pref_enable_background_auth_summary" android:key="@string/pref_EnableBackgroundAuth" android:title="@string/pref_enable_background_auth" android:defaultValue="true"/>
+    <CheckBoxPreference android:summary="@string/pref_enable_background_auth_summary" android:key="@string/pref_EnableBackgroundAuth" android:title="@string/pref_enable_background_auth" android:defaultValue="true"/><PreferenceCategory android:title="@string/pref_title_logging" android:summary="@string/pref_logging_summary">
+        <CheckBoxPreference android:key="@string/pref_saveLogFileEnable" android:title="@string/pref_label_log_save_enable" android:defaultValue="false" android:summary="@string/pref_label_log_save_enable_summary"/>
+        <CheckBoxPreference android:key="@string/pref_saveLogDir" android:title="@string/pref_label_save_location" android:defaultValue="true" android:dependency="@string/pref_saveLogFileEnable"/>
+    </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_group_locked">
         <CheckBoxPreference android:title="@string/pref_check_autodisable_wifi" android:defaultValue="true" android:key="@string/pref_lockedAutoDisableWifi" android:summary="@string/pref_check_autodisable_wifi_summary" />
         <CheckBoxPreference android:key="@string/pref_ReenableWifiQuiet" android:title="@string/pref_check_reenable_wifi_quiet" android:defaultValue="true" android:summary="@string/pref_check_reenable_wifi_quiet_summary" />
