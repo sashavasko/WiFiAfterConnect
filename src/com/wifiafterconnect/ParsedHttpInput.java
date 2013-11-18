@@ -90,14 +90,15 @@ public class ParsedHttpInput extends Worker{
 
 	public ParsedHttpInput (Worker other, URL url, String html, Map<String,String> headers) {
 		super (other);
-		httpHeaders = headers;
+		// create a copy of headers hash map, so that we retain original input in case 
+		// parameter gets modified later on by the caller for some reason.
+		httpHeaders = new HashMap <String,String>(headers);
 		parse (url, html);
 	}
 
 	private void parse(URL url, String input) {
 		captiveHandler = null;
 		httpInput = null;
-		httpHeaders.clear();
 		
 		if (input.startsWith("{")) {
 			// TODO implement parsing as JSON???
@@ -114,6 +115,7 @@ public class ParsedHttpInput extends Worker{
 				error("Failed to parse the HTML page");
 			}else {
 				httpInput = htmlPage;
+				debug("HTML page parsed. OnLoad = [" + htmlPage.getOnLoad() + "]");
 				if (!submitOnLoad(htmlPage)) {
 					// Probably the actual login page
 					captiveHandler = CaptivePageHandler.autodetect (httpInput);
@@ -189,18 +191,26 @@ public class ParsedHttpInput extends Worker{
 		
 		ParsedHttpInput result = null;
 
-		String redirectLoc = null;
+		String redirectLoc = getHttpHeader(HTTP_HEADER_LOCATION);
+		if (BuildConfig.DEBUG)
+			debug ("submitOnLoad() = " + submitOnLoad() + 
+					", hasSubmittableForm = " + hasSubmittableForm() +
+					", redirectLoc = " + redirectLoc +
+					", hasMetaRefresh() = " + hasMetaRefresh());
+
 		if (submitOnLoad() || (authFollowup && hasSubmittableForm())) {
 			debug("Handling onLoad submit ...");
 			result = postForm (null);
-		}else if (!(redirectLoc = getHttpHeader(ParsedHttpInput.HTTP_HEADER_LOCATION)).isEmpty()){
+		}else if (!redirectLoc.isEmpty()){
 			debug("Handling Location redirect ...");
 			result = getRefresh (redirectLoc);
 		}else if (hasMetaRefresh() && (authFollowup || getHtmlForm () == null)) {
 			debug("Handling meta refresh ...");
 			result = getRefresh (null);
-		}else
+		}else {
+			debug("No redirect action detected ...");
 			return this;
+		}
 		
 		if (result != null) 
 			result = result.handleAutoRedirects(maxRequests-1, authFollowup);
@@ -219,7 +229,6 @@ public class ParsedHttpInput extends Worker{
 	public boolean submitOnLoad(HtmlPage hp) {
 		if (hp != null) {
 			String onLoad = hp.getOnLoad();
-			debug("OnLoad = [" + onLoad + "]");
 			return onLoad.equalsIgnoreCase("document.forms[0].submit();")
 					|| onLoad.equalsIgnoreCase("document.form.submit();")
 					|| onLoad.endsWith(".submit();"); // this one is probably enough
@@ -454,6 +463,7 @@ public class ParsedHttpInput extends Worker{
 	}
 
 	private static void showReceivedConnection (Worker context, HttpURLConnection conn, String data, int totalBytesIn, Map <String,String> headers) {
+		context.debug ("Page received:");
 		for (String key : headers.keySet())
 			context.debug("Field["+ key + "] = [" + headers.get(key) + "]");
 
