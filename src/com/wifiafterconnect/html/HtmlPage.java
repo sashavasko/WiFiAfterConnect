@@ -36,7 +36,8 @@ import com.wifiafterconnect.util.HttpInput;
 public class HtmlPage extends HttpInput {
 	private Map<String,HtmlForm> namedForms = new HashMap<String,HtmlForm>();
 	private List<HtmlForm> forms = new ArrayList<HtmlForm>();
-	private List<JavaScript> javaScripts = new ArrayList<JavaScript>();
+	private List<JavaScript> headJavaScripts = new ArrayList<JavaScript>();
+	private List<JavaScript> bodyJavaScripts = new ArrayList<JavaScript>();
 	
 	private String onLoad = "";
 	private String title = "";
@@ -83,6 +84,17 @@ public class HtmlPage extends HttpInput {
 		return title;
 	}
 
+	protected boolean isJavaScript (Element jse){
+		if (!jse.tag().toString().equals("script"))
+			return false;
+		String attr = "";
+		if (jse.hasAttr("language"))
+			attr = jse.attr("language");
+		else if (jse.hasAttr("type"))
+			attr = jse.attr("type");
+		return attr.equalsIgnoreCase("javascript") || attr.equalsIgnoreCase("text/javascript");
+	}
+	
 	@Override
 	public boolean parse (String html) {
 		Log.d(Constants.TAG, "Page " + this);
@@ -134,11 +146,25 @@ public class HtmlPage extends HttpInput {
 			if (!fid.isEmpty())
 				namedForms.put(fid, f);
 		}
-		
-		for (Element jse : content.getElementsByTag("script")) {
-			JavaScript j = new JavaScript (jse);
-			javaScripts.add (j);
-			Log.d(Constants.TAG, "Parsing html: JS added. javaScripts = " + javaScripts.toString());
+		for (Element head : content.getElementsByTag("head")) {
+			for (Element jse : head.getElementsByTag("script")) {
+				if (isJavaScript(jse)){
+					JavaScript j = new JavaScript (jse);
+					headJavaScripts.add (j);
+					Log.d(Constants.TAG, "Parsing html: HEAD JS added. javaScripts = " + headJavaScripts.toString());
+				}
+			}
+			if (!headJavaScripts.isEmpty())
+				checkJavaScriptForMetaRefresh();
+		}
+		for (Element body : content.getElementsByTag("body")) {
+			for (Element jse : body.getElementsByTag("script")) {
+				if (isJavaScript(jse)){
+					JavaScript j = new JavaScript (jse);
+					bodyJavaScripts.add (j);
+					Log.d(Constants.TAG, "Parsing html: HEAD JS added. javaScripts = " + bodyJavaScripts.toString());
+				}
+			}
 		}
 
 		for (Element ie : content.getElementsByTag("input")) {
@@ -165,6 +191,51 @@ public class HtmlPage extends HttpInput {
 	    }
 		
 		return true;
+	}
+	
+	private JavaScript getHeadJavaScript (final String signature) {
+		for (JavaScript js : headJavaScripts) 
+			if (js.matchCode(signature) >= 0) 
+				return js;
+		return null;
+	}
+	
+	private void checkJavaScriptForMetaRefresh() {
+		final String signature = "document.write('<meta http-equiv=\"REFRESH\" content=\"0;url=' + cpUrl";
+		if (getHeadJavaScript (signature) != null) {
+			JavaScript js = getHeadJavaScript ("cpUrl =");
+			Log.d(Constants.TAG, "checkJavaScriptForMetaRefresh(): js for cpUrl = " + js);
+
+			if (js != null) {
+				String cpUrl = js.evalStringVar ("cpUrl");
+				Log.d(Constants.TAG, "checkJavaScriptForMetaRefresh(): cpUrl = " + cpUrl);
+				if (!cpUrl.isEmpty()){
+					String pAction = js.evalStringVar ("pAction");
+					String controllerType = js.evalStringVar ("ControllerType");
+					String hotelGroup = js.evalStringVar ("HotelGroup");
+					String hotelBrand = js.evalStringVar ("HotelBrand");
+					String hotelId = js.evalStringVar ("HotelId");
+					String usr = js.evalStringVar ("usr");
+					String pwd = js.evalStringVar ("pwd");
+
+					cpUrl += "pa=" + pAction;
+					if (!controllerType.isEmpty())
+						cpUrl += "&ct=" + controllerType;
+					if (!hotelGroup.isEmpty())
+						cpUrl += "&hg=" + hotelGroup;
+					if (!hotelBrand.isEmpty())
+						cpUrl += "&hb=" + hotelBrand;
+					if (!hotelId.isEmpty())
+						cpUrl += "&id=" + hotelId;
+					if (!usr.isEmpty())
+						cpUrl += "&usr=" + usr;
+					if (!pwd.isEmpty())
+						cpUrl += "&pwd=" + pwd;
+
+					httpEquivMetas.put("refresh", "0;url=" + cpUrl);
+				}
+			}
+		}
 	}
 	
 	public String getOnLoad() {
@@ -230,7 +301,7 @@ public class HtmlPage extends HttpInput {
 	
 	public String getDocumentReadyFunc () {
 		String func = null;
-		for (JavaScript js : javaScripts) {
+		for (JavaScript js : headJavaScripts) {
 			if ((func = js.getDocumentReadyFunc()) != null)
 				return func;
 		}
