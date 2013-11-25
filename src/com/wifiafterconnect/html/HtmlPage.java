@@ -201,6 +201,7 @@ public class HtmlPage extends HttpInput {
 	}
 	
 	private void checkJavaScriptForMetaRefresh() {
+		// This is specific to GuestNetInc portals :
 		final String signature = "document.write('<meta http-equiv=\"REFRESH\" content=\"0;url=' + cpUrl";
 		if (getHeadJavaScript (signature) != null) {
 			JavaScript js = getHeadJavaScript ("cpUrl =");

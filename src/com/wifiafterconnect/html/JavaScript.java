@@ -409,10 +409,12 @@ public class JavaScript {
 	
 	public static List<Token> clean(List<Token> tokensAll) {
 		List<Token> result = new ArrayList <Token>();
-		for (Token t1 : tokensAll) {
-			if (t1 instanceof WhiteSpace || t1 instanceof Comment)
-				continue;
-			result.add(t1);
+		if (tokensAll != null) {
+			for (Token t1 : tokensAll) {
+				if (t1 instanceof WhiteSpace || t1 instanceof Comment)
+					continue;
+				result.add(t1);
+			}
 		}
 		return result;
 	}
@@ -481,6 +483,8 @@ public class JavaScript {
 	}
 	
 	public int matchCode (List<Token> tokenizedCode) {
+		if (tokensClean == null || tokenizedCode == null)
+			return -1;
 		for (int i = 0 ; i < tokensClean.size() ; ++i) {
 			
 			if (tokensClean.get(i) instanceof LineTerminator)
@@ -520,16 +524,18 @@ public class JavaScript {
 		int assignmentIdx = matchCode (tokenizedCode);
 		
 		// TODO implement proper evaluation of expressions :
-		return (assignmentIdx >= 0 && assignmentIdx+2 < tokensClean.size()) ? tokensClean.get(assignmentIdx+2).toString() : null;
+		return (assignmentIdx >= 0 && assignmentIdx+2 < tokensClean.size()) ? tokensClean.get(assignmentIdx+2).toString() : "";
 	}
 		
 	public static String scriptFromTokens (List<Token> tokens) {
 		StringBuilder sb = new StringBuilder();
-		for (Token t : tokens) {
-			if (t instanceof LineTerminator)
-				sb.append('\n');
-			else
-				sb.append(t.toString()).append(' ');
+		if (tokens != null) {
+			for (Token t : tokens) {
+				if (t instanceof LineTerminator)
+					sb.append('\n');
+				else
+					sb.append(t.toString()).append(' ');
+			}
 		}
 		return sb.toString();
 	}
@@ -548,30 +554,31 @@ public class JavaScript {
 	
 	public String eval (int idx) {
 		String result = "";
-		while (idx  < tokensClean.size()) {
-			Token tok = tokensClean.get(idx++);
-			Log.d(Constants.TAG, "eval(" + idx + "): tok = " + tok.toString());
-			if (tok.equals(punctSemicolon))
-				break;
-			if (tok instanceof Punctuator && idx < tokensClean.size()) {
-				Token tokOp = tokensClean.get(idx++);
+		if (tokensClean != null) {
+			while (idx  < tokensClean.size()) {
+				Token tok = tokensClean.get(idx++);
 				Log.d(Constants.TAG, "eval(" + idx + "): tok = " + tok.toString());
-				String strOp = "";
-				if (tokOp instanceof StringLiteral) {
-					strOp = tokOp.toString();
-					strOp = strOp.substring(1, strOp.length()-1);
-				}else if (tokOp instanceof Identifier) {
-					strOp = evalStringVar(tokOp.toString());
+				if (tok.equals(punctSemicolon))
+					break;
+				if (tok instanceof Punctuator && idx < tokensClean.size()) {
+					Token tokOp = tokensClean.get(idx++);
+					Log.d(Constants.TAG, "eval(" + idx + "): tok = " + tok.toString());
+					String strOp = "";
+					if (tokOp instanceof StringLiteral) {
+						strOp = tokOp.toString();
+						strOp = strOp.substring(1, strOp.length()-1);
+					}else if (tokOp instanceof Identifier) {
+						strOp = evalStringVar(tokOp.toString());
+					}
+					Log.d(Constants.TAG, "eval(" + idx + "): strOp = " + strOp);
+					// only support addition for now
+					if (tok.equals(punctAssign))
+						result += strOp;
+					else if (tok.equals(punctAdd))
+						result += strOp;
 				}
-				Log.d(Constants.TAG, "eval(" + idx + "): strOp = " + strOp);
-				// only support addition for now
-				if (tok.equals(punctAssign))
-					result += strOp;
-				else if (tok.equals(punctAdd))
-					result += strOp;
 			}
 		}
-			
 		return result;
 	}
 
