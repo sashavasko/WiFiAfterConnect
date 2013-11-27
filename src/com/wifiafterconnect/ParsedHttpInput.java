@@ -327,7 +327,7 @@ public class ParsedHttpInput extends Worker{
 		return post (this, url, postDataString, cookies, getURL().toString());
 	}
 	
-	public ParsedHttpInput getRefresh (String urlString) {
+	public URL makeRefreshURL (String urlString) {
 		URL url = null;
 		if (httpInput != null) {
 			try {
@@ -345,6 +345,11 @@ public class ParsedHttpInput extends Worker{
 				exception(ee);
 			}
 		}
+		return url;
+	}
+	
+	public ParsedHttpInput getRefresh (String urlString) {
+		URL url = makeRefreshURL(urlString);
 		return url == null ?  null : get (this, url, getURL().toString());
 	}
 	

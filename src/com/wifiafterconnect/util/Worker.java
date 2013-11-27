@@ -20,8 +20,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import com.wifiafterconnect.Constants;
+
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 public class Worker extends ContextHolder {
 	private Logger logger;
@@ -63,6 +66,7 @@ public class Worker extends ContextHolder {
 	public void setLogFileName (String filename) {
 		if (prefs.getSaveLogToFile()) {
 			File saveDir = prefs.getSaveLogLocation();
+			Log.d(Constants.TAG, "Save location = " + saveDir);
 			try {
 				logger.setLogFile(new File (saveDir, filename));
 			} catch (FileNotFoundException e) {

@@ -60,7 +60,18 @@ public class HttpInput {
 		try {
 			return new URL (urlString);
 		} catch (MalformedURLException e) {
-			return new URL(getURL().getProtocol(), getURL().getAuthority(), urlString);
+			URL srcURL = getURL(); 
+			if (urlString.startsWith("/")) {
+				URL result = new URL(srcURL.getProtocol() + "://" + srcURL.getAuthority() + urlString);
+				//Log.d(Constants.TAG, "Authority = {" + srcURL.getAuthority() + "}, result URL = {" + result.toString() + "}");
+				return result;
+			}else {
+				String path = srcURL.getPath();
+				int idx = path.lastIndexOf('/');
+				if (idx < 0)
+					throw new MalformedURLException ();
+				return new URL(srcURL.getProtocol() + "://" + srcURL.getAuthority() +  path.substring(0, idx+1) + urlString);
+			}
 		}
 	}
 

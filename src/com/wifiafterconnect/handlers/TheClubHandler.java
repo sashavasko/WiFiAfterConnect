@@ -14,7 +14,6 @@ import android.util.Log;
 import com.wifiafterconnect.Constants;
 import com.wifiafterconnect.ParsedHttpInput;
 import com.wifiafterconnect.WifiAuthParams;
-import com.wifiafterconnect.handlers.CaptivePageHandler.States;
 import com.wifiafterconnect.html.HtmlForm;
 import com.wifiafterconnect.html.HtmlPage;
 import com.wifiafterconnect.util.HttpInput;

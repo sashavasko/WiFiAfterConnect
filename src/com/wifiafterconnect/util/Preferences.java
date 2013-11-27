@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 public class Preferences {
 
@@ -21,10 +22,13 @@ public class Preferences {
 	}
 
 	public boolean getSaveLogToFile () {
-		if (BuildConfig.DEBUG)
-			return false;
-		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
-		return sharedPrefs.getBoolean ("pref_saveLogFileEnable", false);
+		boolean result = false;
+		if (BuildConfig.DEBUG){
+			SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+			result = sharedPrefs.getBoolean ("pref_saveLogFileEnable", false);
+		}
+		Log.d(Constants.TAG, "getSaveLogToFile = " + result);
+		return result;
 	}
 	
 	public File getSaveLogLocation () {
