@@ -154,15 +154,8 @@ public class HtmlForm {
 				String origPath = originalURL.getPath(); //ignore query of original url 
 				if (file.isEmpty())
 					file = origPath;
-				else if (!file.contains("/")) {
-					String[] parts = origPath.split("[/]");
-					parts[parts.length-1] = file;
-					file = "";
-					for (int i = 0; i < parts.length ; ++i ){
-						file += parts[i];
-						if (i  < parts.length - 1)
-							file += "/";
-					}
+				else if (!file.startsWith("/")) {
+					file = origPath.substring(0, origPath.lastIndexOf('/')+1) + file;
 				}
 					
 				protocol = originalURL.getProtocol();
