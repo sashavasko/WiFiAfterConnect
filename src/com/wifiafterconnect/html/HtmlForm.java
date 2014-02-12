@@ -182,7 +182,7 @@ public class HtmlForm {
 	public WifiAuthParams fillParams (WifiAuthParams params) {
 		
 		for (HtmlInput i :inputsList) {
-			if (!i.isHidden()) {
+			if (!i.isHidden() && !params.hasParam(i.getName())) {
 				HtmlInput param = new HtmlInput (i);
 				params.add(param);
 			}
