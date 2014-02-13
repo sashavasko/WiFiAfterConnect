@@ -199,7 +199,7 @@ public class WifiAuthenticator extends Worker{
 				WifiBroadcastReceiver.setEnabled(getContext(), false);				
 			}
 		}else {
-			debug("Screen is on - Starting new acivity.");
+			debug("Screen is on - Starting new activity.");
 			/**
 			 *  Screen is On - so proceeding displaying activity asking for credentials.
 			 */
@@ -208,7 +208,7 @@ public class WifiAuthenticator extends Worker{
 			intent.putExtra (OPTION_URL, parsedPage.getURL().toString());
 			intent.putExtra (OPTION_PAGE, parsedPage.getHtml());
 			toIntent(intent);
-			debug("Starting acivity for intent:"+intent.toString());
+			debug("Starting activity for intent:"+intent.toString());
 			startActivity (intent);
 		}
 	}

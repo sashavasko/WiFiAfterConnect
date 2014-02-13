@@ -31,6 +31,8 @@ public interface Constants {
 	public static final String URL_TO_CHECK_HTTPS = URL_KERNEL_ORG_HTTPS;
 	
 	public static final int SOCKET_TIMEOUT_MS = 20000;
+	public static final int CAPTIVE_READ_TIMEOUT_MS = 120000; // this could be really slow in some cases
+	
 	
 	public static final String [] PROTOCOLS = {"http","https"};
 
@@ -38,6 +40,6 @@ public interface Constants {
 
 	// MAX timeout while handling <meta http-equiv="refresh" content="timeout; url=url">
 	public static final int MAX_REFRESH_TIMEOUT = 15;
-	
+
 
 }

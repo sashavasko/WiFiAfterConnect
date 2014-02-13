@@ -396,7 +396,7 @@ public class ParsedHttpInput extends Worker{
 			context.debug("Post URL = [" + postURL + "]");
 			conn = (HttpURLConnection) postURL.openConnection();
 			conn.setConnectTimeout(Constants.SOCKET_TIMEOUT_MS);
-			conn.setReadTimeout(Constants.SOCKET_TIMEOUT_MS);
+			conn.setReadTimeout(Constants.CAPTIVE_READ_TIMEOUT_MS);
 			conn.setDoInput(true);
 			conn.setDoOutput(true);
 			conn.setUseCaches(false);
