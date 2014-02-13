@@ -50,6 +50,22 @@ public class WifiAuthenticator extends Worker{
 		
 	}
 	
+	public enum AuthStatus {
+		INPROGRESS, SUCCESS, FAIL;
+		
+		public static AuthStatus valueOf(boolean success) {
+			return success ? SUCCESS: FAIL;
+		}
+		
+		public static AuthStatus valueOf(CaptivePageHandler.States captiveResult){
+			return captiveResult == CaptivePageHandler.States.Success ? SUCCESS : FAIL;
+		}
+		
+		public boolean isSuccess() {
+			return this == SUCCESS;
+		}
+	}
+	
 	private String authHost;
 	
 	public WifiAuthenticator (Worker creator, URL hostURL) {
@@ -130,18 +146,18 @@ public class WifiAuthenticator extends Worker{
 		nm.notify(0, n);
 	}
 	
-	protected void notifyAuthentication(int status)
+	protected void notifyAuthentication(AuthStatus status)
 	{
 		if (prefs.getNotifyAuthentication())
 		{
 			NotificationCompat.Builder builder = new NotificationCompat.Builder(getContext())
 			.setSmallIcon (R.drawable.wifiac_small)
 			.setContentTitle(getResourceString(R.string.notif_wifi_auth_title));
-			if (status == 0)
+			if (status == AuthStatus.INPROGRESS)
 				builder.setContentText(getResourceString(R.string.notif_wifi_auth_inprogress));
-			else if (status == 1)
+			else if (status == AuthStatus.SUCCESS)
 				builder.setContentText(getResourceString(R.string.notif_wifi_auth_success) + " - " + authHost);
-			else if (status == 2)
+			else if (status == AuthStatus.FAIL)
 				builder.setContentText(getResourceString(R.string.notif_wifi_auth_fail));
 			Notification n = builder.build();
 			NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -264,7 +280,7 @@ public class WifiAuthenticator extends Worker{
 
 	public boolean attemptAuthentication (ParsedHttpInput currentPage, WifiAuthParams authParams) {
 
-		notifyAuthentication(0);
+		notifyAuthentication(AuthStatus.INPROGRESS);
 		CaptivePageHandler.States captiveState = CaptivePageHandler.States.HandleRedirects; 
 		/* Some portals supply as the first page ip, MAC etc 
 		 * inside of the form that has to be submitted onLoad.
@@ -277,19 +293,19 @@ public class WifiAuthenticator extends Worker{
 			// and display error requiring it
 			if ((currentPage = currentPage.handleAutoRedirects (Constants.MAX_AUTOMATED_REQUESTS, false)) == null) {
 				error ("Failed to follow the sequence of redirects...");
-				notifyAuthentication(2);
+				notifyAuthentication(AuthStatus.FAIL);
 				return false;
 			}
 			debug("Done handling pre-auth redirects. parsedPage = " + currentPage);
 
 			if (!currentPage.isKnownCaptivePortal()) {
 				error ("Unknown Captive portal. Aborting.");
-				notifyAuthentication(2);
+				notifyAuthentication(AuthStatus.FAIL);
 				return false;
 			}
 
 			if (!checkTNCShown(currentPage)) {
-				notifyAuthentication(2);
+				notifyAuthentication(AuthStatus.FAIL);
 				return false; 	// it is the first time that user connected to this SSID , 
 				// so we let them go through the proper web authentication.
 			}
@@ -311,35 +327,33 @@ public class WifiAuthenticator extends Worker{
 			currentPage = nextPage;
 		}
 		
-		boolean success = (captiveState == CaptivePageHandler.States.Success);
+		AuthStatus status = AuthStatus.valueOf(captiveState);
 
-		if (success) {
+		if (status.isSuccess()) {
 			debug("Re-checking connection ...");
 			URLRedirectChecker checker = new URLRedirectChecker (this);
-			success = checker.checkHttpConnection (AuthorizationType.None);
-			if (success) 
+			status = AuthStatus.valueOf(checker.checkHttpConnection (AuthorizationType.None));
+			if (status.isSuccess())
 			{
 				WifiAuthDatabase wifiDb = getDb();
 				debug("Saving Auth Params. db = [" + wifiDb + "]");
 				if (wifiDb != null)
 					wifiDb.storeAuthParams(authHost, authParams);
-			}
-				
-			if (success && getContext() != null) {
-				notifyAuthentication(1);
-				cancelWatchdogNotification();
-				try {
-					//Toast.makeText(context, context.getText(R.string.success_notification) + " " + authHost, Toast.LENGTH_SHORT).show();
-				}catch (Throwable e){
-					// don't care
+				if (getContext() != null) {
+					cancelWatchdogNotification();
+					try {
+						//Toast.makeText(context, context.getText(R.string.success_notification) + " " + authHost, Toast.LENGTH_SHORT).show();
+					}catch (Throwable e){
+						// don't care
+					}
+					// do we need this so that Toast would actually display ?
+					Thread.yield();
 				}
-				// do we need this so that Toast would actually display ?
-				Thread.yield();
 			}
 		}
-		else
-			notifyAuthentication(2);
-		return success;
+		
+		notifyAuthentication(status);
+		return status.isSuccess();
 	}
 
 }
