@@ -129,6 +129,25 @@ public class WifiAuthenticator extends Worker{
 		NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		nm.notify(0, n);
 	}
+	
+	protected void notifyAuthentication(int status)
+	{
+		if (prefs.getNotifyAuthentication())
+		{
+			NotificationCompat.Builder builder = new NotificationCompat.Builder(getContext())
+			.setSmallIcon (R.drawable.wifiac_small)
+			.setContentTitle(getResourceString(R.string.notif_wifi_auth_title));
+			if (status == 0)
+				builder.setContentText(getResourceString(R.string.notif_wifi_auth_inprogress));
+			else if (status == 1)
+				builder.setContentText(getResourceString(R.string.notif_wifi_auth_success) + " - " + authHost);
+			else if (status == 2)
+				builder.setContentText(getResourceString(R.string.notif_wifi_auth_fail));
+			Notification n = builder.build();
+			NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+			nm.notify(1, n);
+		}
+	}
 	/*
 	 * Android starting with 4.0 has watchdog that checks for walled garden if it detects on it 
 	 * posts a notification which may mislead user as we will take care of it.
@@ -245,6 +264,7 @@ public class WifiAuthenticator extends Worker{
 
 	public boolean attemptAuthentication (ParsedHttpInput currentPage, WifiAuthParams authParams) {
 
+		notifyAuthentication(0);
 		CaptivePageHandler.States captiveState = CaptivePageHandler.States.HandleRedirects; 
 		/* Some portals supply as the first page ip, MAC etc 
 		 * inside of the form that has to be submitted onLoad.
@@ -257,16 +277,19 @@ public class WifiAuthenticator extends Worker{
 			// and display error requiring it
 			if ((currentPage = currentPage.handleAutoRedirects (Constants.MAX_AUTOMATED_REQUESTS, false)) == null) {
 				error ("Failed to follow the sequence of redirects...");
+				notifyAuthentication(2);
 				return false;
 			}
 			debug("Done handling pre-auth redirects. parsedPage = " + currentPage);
 
 			if (!currentPage.isKnownCaptivePortal()) {
 				error ("Unknown Captive portal. Aborting.");
+				notifyAuthentication(2);
 				return false;
 			}
 
 			if (!checkTNCShown(currentPage)) {
+				notifyAuthentication(2);
 				return false; 	// it is the first time that user connected to this SSID , 
 				// so we let them go through the proper web authentication.
 			}
@@ -303,6 +326,7 @@ public class WifiAuthenticator extends Worker{
 			}
 				
 			if (success && getContext() != null) {
+				notifyAuthentication(1);
 				cancelWatchdogNotification();
 				try {
 					//Toast.makeText(context, context.getText(R.string.success_notification) + " " + authHost, Toast.LENGTH_SHORT).show();
@@ -313,6 +337,8 @@ public class WifiAuthenticator extends Worker{
 				Thread.yield();
 			}
 		}
+		else
+			notifyAuthentication(2);
 		return success;
 	}
 

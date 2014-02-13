@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
     <CheckBoxPreference android:summary="@string/pref_enable_background_auth_summary" android:key="@string/pref_EnableBackgroundAuth" android:title="@string/pref_enable_background_auth" android:defaultValue="true"/>
+    <CheckBoxPreference android:key="@string/pref_NotifyAuthentication" android:title="@string/pref_NotifyAuthentication_title" android:defaultValue="false"/>
     <PreferenceCategory android:title="@string/pref_group_locked">
         <CheckBoxPreference android:title="@string/pref_check_autodisable_wifi" android:defaultValue="true" android:key="@string/pref_lockedAutoDisableWifi" android:summary="@string/pref_check_autodisable_wifi_summary" />
         <CheckBoxPreference android:key="@string/pref_ReenableWifiQuiet" android:title="@string/pref_check_reenable_wifi_quiet" android:defaultValue="true" android:summary="@string/pref_check_reenable_wifi_quiet_summary" />
