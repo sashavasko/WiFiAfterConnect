@@ -26,5 +26,7 @@
     <string name="prefcat_URL_title">URLs to use</string>
     <string name="pref_URLToCheckHTTPS">pref_URLToCheckHTTPS</string>
     <string name="pref_URLToCheckHTTPS_title">HTTPS Url</string>
+    <string name="pref_NotifyAuthentication">pref_NotifyAuthentication</string>
+    <string name="pref_NotifyAuthentication_title">Notify authentication</string>
 
 </resources>
