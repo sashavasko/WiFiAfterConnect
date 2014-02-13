@@ -50,6 +50,11 @@ public class Preferences {
 		return sharedPrefs.getBoolean ("pref_ReenableWifiQuiet", true);
 	}
 
+	public boolean getNotifyAuthentication () {
+		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+		return sharedPrefs.getBoolean ("pref_NotifyAuthentication", true);
+	}
+
 	public URL getURLToCheckHttp  () {
 		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
 		URL url = null;
