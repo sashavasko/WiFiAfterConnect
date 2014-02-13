@@ -48,6 +48,7 @@ public class HtmlInput {
 	public static final String TYPE_WEEK = "week";
 
 	public static final String DEFAULT_TYPE = TYPE_TEXT;
+	public static final String CHARSET_NAME = "UTF-8";
 	
 	// Empty strings if not available (except type)(see Jsoup docs : http://jsoup.org/apidocs/org/jsoup/nodes/Node.html#attr%28java.lang.String%29)
 	private String name;
@@ -131,12 +132,12 @@ public class HtmlInput {
 		// TODO: Using URLEncoder is probably less efficient then UriBuilder
 		try {
 			if (matchType (HtmlInput.TYPE_IMAGE)) {
-				postData.append("&").append("x").append('=').append("1");
-				postData.append("&").append("y").append('=').append("1");
+				postData.append('&').append('x').append('=').append('1');
+				postData.append('&').append('y').append('=').append('1');
 			}else if (matchType (HtmlInput.TYPE_RADIO) && checked.isEmpty()) {
 				// ignore unchecked radio buttons
 			}else
-				postData.append("&").append(name).append('=').append(URLEncoder.encode(value,"UTF-8"));
+				postData.append('&').append(URLEncoder.encode(name,CHARSET_NAME)).append('=').append(URLEncoder.encode(value,CHARSET_NAME));
 		} catch (UnsupportedEncodingException e) {
 			// should never get here
 		}
