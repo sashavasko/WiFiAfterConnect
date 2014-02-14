@@ -30,8 +30,8 @@ public interface Constants {
 	public static final String URL_TO_CHECK_HTTP = URL_KERNEL_ORG_HTTP;
 	public static final String URL_TO_CHECK_HTTPS = URL_KERNEL_ORG_HTTPS;
 	
-	public static final int SOCKET_TIMEOUT_MS = 20000;
-	public static final int CAPTIVE_READ_TIMEOUT_MS = 120000; // this could be really slow in some cases
+	public static final int SOCKET_CONNECT_TIMEOUT_MS = 0; //Use TCP timeout
+	public static final int SOCKET_READ_TIMEOUT_MS = 220000; // this could be really slow in some cases
 	
 	
 	public static final String [] PROTOCOLS = {"http","https"};

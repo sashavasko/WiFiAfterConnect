@@ -395,8 +395,9 @@ public class ParsedHttpInput extends Worker{
 			 */
 			context.debug("Post URL = [" + postURL + "]");
 			conn = (HttpURLConnection) postURL.openConnection();
-			conn.setConnectTimeout(Constants.SOCKET_TIMEOUT_MS);
-			conn.setReadTimeout(Constants.CAPTIVE_READ_TIMEOUT_MS);
+			conn.setInstanceFollowRedirects(false);
+			conn.setConnectTimeout(Constants.SOCKET_CONNECT_TIMEOUT_MS);
+			conn.setReadTimeout(Constants.SOCKET_READ_TIMEOUT_MS);
 			conn.setDoInput(true);
 			conn.setDoOutput(true);
 			conn.setUseCaches(false);
@@ -447,8 +448,8 @@ public class ParsedHttpInput extends Worker{
 			HttpURLConnection conn = null;
 			try {
 				conn = (HttpURLConnection) url.openConnection();
-				conn.setConnectTimeout(Constants.SOCKET_TIMEOUT_MS);
-				conn.setReadTimeout(Constants.SOCKET_TIMEOUT_MS);
+				conn.setConnectTimeout(Constants.SOCKET_CONNECT_TIMEOUT_MS);
+				conn.setReadTimeout(Constants.SOCKET_READ_TIMEOUT_MS);
 				conn.setUseCaches(false);
 				conn.setRequestProperty("User-Agent",HTTP_USER_AGENT);
 				conn.setRequestProperty("Accept","*/*");
@@ -491,6 +492,14 @@ public class ParsedHttpInput extends Worker{
 				in = new BufferedInputStream(conn.getErrorStream());
 			}
 
+			Map<String,String> headers = new HashMap<String,String>();
+			String field = null;
+			for (int pos = 0 ; (field = conn.getHeaderField(pos)) != null ; ++pos )
+				headers.put (conn.getHeaderFieldKey(pos), field);
+
+			if (BuildConfig.DEBUG)
+				showReceivedConnection (creator, conn, "not yet", 0, headers);
+			
 			creator.debug("Response code = " + conn.getResponseCode());
 			
 			BufferedReader r = new BufferedReader(new InputStreamReader(in));
@@ -503,11 +512,6 @@ public class ParsedHttpInput extends Worker{
 					totalBytesIn += bytesIn;
 				}
 			}
-			
-			Map<String,String> headers = new HashMap<String,String>();
-			String field = null;
-			for (int pos = 0 ; (field = conn.getHeaderField(pos)) != null ; ++pos )
-				headers.put (conn.getHeaderFieldKey(pos), field);
 			
 			if (BuildConfig.DEBUG)
 				showReceivedConnection (creator, conn, total.toString(), totalBytesIn, headers);
