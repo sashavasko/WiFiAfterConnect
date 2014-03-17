@@ -27,7 +27,7 @@ import com.wifiafterconnect.util.Worker;
  */
 public abstract class HttpConnectionWrapper {
 	private URL url;
-	protected final Map<String,String> headers = new HashMap<String,String>();
+	protected Map<String,String> headers = new HashMap<String,String>();
 	protected String data;
 	
 	public URL getUrl() {

@@ -193,7 +193,7 @@ public class HtmlPage extends HttpInput {
 		return true;
 	}
 	
-	private JavaScript getHeadJavaScript (final String signature) {
+	public JavaScript getHeadJavaScript (final String signature) {
 		for (JavaScript js : headJavaScripts) 
 			if (js.matchCode(signature) >= 0) 
 				return js;

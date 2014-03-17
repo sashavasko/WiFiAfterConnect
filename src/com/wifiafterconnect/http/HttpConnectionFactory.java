@@ -57,4 +57,10 @@ public enum HttpConnectionFactory {
 		connectionClass = name;
 		this.singleton = singleton;
 	}
+
+	public void setConnectionInstance (HttpConnectionWrapper instance) {
+		singletonInstance = instance;
+		connectionClass = instance.getClass().getName();
+		this.singleton = true;
+	}
 }
