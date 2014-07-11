@@ -38,6 +38,7 @@ public class WifiAuthenticator extends Worker{
 	public static final String OPTION_URL = "PARAM_URL";
 	public static final String OPTION_PAGE = "PARAM_PAGE";
 	public static final String OPTION_AUTH_HOST = "PARAM_AUTH_HOST";
+	public static final String OPTION_SITE_ID = "PARAM_SITE_ID";
 
 	private static final String CAPTIVE_PORTAL_TRACKER_NOTIFICATION_ID = "CaptivePortal.Notification"; // Android 4.2 and later
 	private static final String WALLED_GARDEN_NOTIFICATION_ID = "WifiWatchdog.walledgarden"; // Android 4.1

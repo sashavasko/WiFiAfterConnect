@@ -43,6 +43,7 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 	public static final String COLUMN_HOSTNAME = "HostName";
 	public static final String COLUMN_AUTH_ACTION = "AuthAction";
 	public static final String COLUMN_WIFI_ACTION = "WifiAction";
+	static final String[] WIFI_TABLE_PROJECTION_ALL = {COLUMN_ID, COLUMN_AUTH_ACTION, COLUMN_WIFI_ACTION};
 	
 	public static final String WIFI_AUTH_PARAMS_TABLE_NAME = "WifiAuthParams";
 
@@ -108,13 +109,14 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 				COLUMN_SSID + " TEXT, " +
 				" UNIQUE (" + COLUMN_ID + ") ON CONFLICT REPLACE)"
 			);
-		//db.execSQL("insert Into " + WIFI_TABLE_NAME + " values (1,'www.test1.com','uname1','pword1',null,null,null)");
-		//db.execSQL("insert Into " + WIFI_TABLE_NAME + " values (2,'www.test2.com','uname2','pword2',null,null,null)");
+		db.execSQL("insert Into " + WIFI_TABLE_NAME + " values (1,'www.test1.com','" + AuthAction.DEFAULT + "','" +  WifiTools.Action.DEFAULT + "')");
+		db.execSQL("insert Into " + WIFI_AUTH_PARAMS_TABLE_NAME + " values (1,1,'" + WifiAuthParams.USERNAME + "','" + HtmlInput.TYPE_TEXT + "','sasha')");
+		db.execSQL("insert Into " + WIFI_AUTH_PARAMS_TABLE_NAME + " values (2,1,'" + WifiAuthParams.PASSWORD + "','" + HtmlInput.TYPE_PASSWORD + "','secret')");
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if(oldVersion < newVersion){
+        if(oldVersion <= newVersion){
         	db.execSQL("DROP TABLE IF EXISTS " + WIFI_TABLE_NAME);
         	db.execSQL("DROP TABLE IF EXISTS " + WIFI_AUTH_PARAMS_TABLE_NAME);
         	db.execSQL("DROP TABLE IF EXISTS " + KNOWN_SSIDS_TABLE_NAME);
@@ -134,6 +136,13 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 
 		// SQLite cursors are always not-null positioned before the first item 
 		return c;	
+	}
+
+	public Cursor getWifiTableCursor (final String[] projection, final Long hostId) {
+		SQLiteDatabase db = getDb();
+		SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
+		builder.setTables(WIFI_TABLE_NAME);
+		return builder.query(db, projection, COLUMN_ID + " = ?", new String[] {hostId.toString()}, null, null, null); 
 	}
 	
 	public Cursor getAuthParamsCursor (final String[] projection, long hostId) {
@@ -246,27 +255,34 @@ public class WifiAuthDatabase extends SQLiteOpenHelper {
 		c.close();
 		return action;
 	}
+
+	protected WifiAuthParams getAuthParamsFromCursorAndCloseIt (Cursor c, final Long hostId){
+		WifiAuthParams params = new WifiAuthParams();
+		params.authAction = AuthAction.parse (c.getString(1));
+		params.wifiAction = WifiTools.Action.parse (c.getString(2));
+		c.close();
+		c = getAuthParamsCursor (new String[]{COLUMN_PARAM_NAME, COLUMN_PARAM_TYPE, COLUMN_PARAM_VALUE}, hostId);
+		while (c.moveToNext()) {
+			HtmlInput i = new HtmlInput (c.getString(0), c.getString(1), c.getString(2));
+			params.add (i);
+		}
+		c.close();
+		return params;
+	}
 	
 	public WifiAuthParams getAuthParams (final String authHost) {
-		
-		WifiAuthParams params = null;
-		final String[] projection = {COLUMN_ID, COLUMN_AUTH_ACTION, COLUMN_WIFI_ACTION};
 
-		Cursor c = getWifiTableCursor (projection, authHost);
+		Cursor c = getWifiTableCursor (WIFI_TABLE_PROJECTION_ALL, authHost);
 		if (c.moveToFirst()) {
 			long hostId = Long.parseLong(c.getString(0));
-			params = new WifiAuthParams();
-			params.authAction = AuthAction.parse (c.getString(1));
-			params.wifiAction = WifiTools.Action.parse (c.getString(2));
-			c.close();
-			c = getAuthParamsCursor (new String[]{COLUMN_PARAM_NAME, COLUMN_PARAM_TYPE, COLUMN_PARAM_VALUE}, hostId);
-			while (c.moveToNext()) {
-				HtmlInput i = new HtmlInput (c.getString(0), c.getString(1), c.getString(2));
-				params.add (i);
-			}
-			c.close();
+			return getAuthParamsFromCursorAndCloseIt(c, hostId);
 		}
-		return params;
+		return null;
+	}
+
+	public WifiAuthParams getAuthParams (final Long hostId) {
+		Cursor c = getWifiTableCursor (WIFI_TABLE_PROJECTION_ALL, hostId);
+		return c.moveToFirst() ? getAuthParamsFromCursorAndCloseIt(c, hostId) : null;
 	}
 	
 	public void storeAuthParams (final String authHost, final WifiAuthParams params) {

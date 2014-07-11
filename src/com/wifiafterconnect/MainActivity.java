@@ -174,6 +174,7 @@ public class MainActivity extends FragmentActivity implements LoaderCallbacks<Cu
 	}
 	
 	private Set<Long> selectedSiteIds = Collections.synchronizedSet(new HashSet<Long>());
+	private Long lastSelectedSiteId = -1L;
 	
 	private class DeleteAndUpdateCursorTask extends AsyncTask<Void, Void, Cursor> {
 	    protected void onPostExecute(Cursor result) {
@@ -188,7 +189,7 @@ public class MainActivity extends FragmentActivity implements LoaderCallbacks<Cu
 					wifiDb.deleteSite (id);
 			}catch(ConcurrentModificationException e){}
 			selectedSiteIds.clear();
-	        Cursor result = wifiDb.getWifiTableCursor (new String[] {WifiAuthDatabase.COLUMN_ID,WifiAuthDatabase.COLUMN_HOSTNAME}, null);
+	        Cursor result = wifiDb.getWifiTableCursor (new String[] {WifiAuthDatabase.COLUMN_ID,WifiAuthDatabase.COLUMN_HOSTNAME}, (String)null);
 	        return result;
 		}
 	}
@@ -199,10 +200,12 @@ public class MainActivity extends FragmentActivity implements LoaderCallbacks<Cu
 	}
 	
 	public void onEditCredentialsClick (View v) {
-		WifiAuthParams authParams = new WifiAuthParams();
-		Intent intent = new Intent(this, WifiAuthenticatorActivity.class);
+		if (!selectedSiteIds.contains(lastSelectedSiteId))
+			return;
+	
+		Intent intent = new Intent(this, EditCredentialsActivity.class);
 		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		intent.putExtra (WifiAuthenticator.OPTION_URL, parsedPage.getURL().toString());
+		intent.putExtra (WifiAuthenticator.OPTION_SITE_ID, lastSelectedSiteId);
 		startActivity (intent);
 	}
 
@@ -252,6 +255,7 @@ public class MainActivity extends FragmentActivity implements LoaderCallbacks<Cu
 	                cb.setOnCheckedChangeListener(new OnCheckedChangeListener ()
 	                	{@Override	public void onCheckedChanged(CompoundButton view, boolean isChecked) {
 	                		Long id = (Long)view.getTag();
+	                		lastSelectedSiteId = id;
 	                		if (isChecked)
 	                			selectedSiteIds.add(id);
 	                		else
@@ -359,7 +363,7 @@ public class MainActivity extends FragmentActivity implements LoaderCallbacks<Cu
 
 		@Override
 		public Cursor loadInBackground() {
-			Cursor c = wifiDb.getWifiTableCursor (new String[] {WifiAuthDatabase.COLUMN_ID,WifiAuthDatabase.COLUMN_HOSTNAME}, null);
+			Cursor c = wifiDb.getWifiTableCursor (new String[] {WifiAuthDatabase.COLUMN_ID,WifiAuthDatabase.COLUMN_HOSTNAME}, (String)null);
 			if (c != null) {
 				int count = c.getCount();
 				Log.d(Constants.TAG, "Loaded " + count + " known sites");

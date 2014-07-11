@@ -32,9 +32,9 @@ public class EditCredentialsActivity extends FragmentActivity {
         setContentView(R.layout.wifi_auth_edit_layout);
         
         Intent intent = getIntent();
-        authHost = intent.getStringExtra (WifiAuthenticator.OPTION_AUTH_HOST);
-        
-        authParams = WifiAuthDatabase.getInstance(this).getAuthParams (authHost);
+        WifiAuthDatabase wifiDb = WifiAuthDatabase.getInstance(this);
+        long siteId = intent.getIntExtra(WifiAuthenticator.OPTION_SITE_ID, -1);
+        authParams = wifiDb.getAuthParams (siteId);
 
         fieldsTable = (TableLayout)findViewById(R.id.fieldsTableLayout);
    		fieldsTable.removeAllViews();
