@@ -39,4 +39,6 @@
     <string name="notif_wifi_auth_success">Logged into WiFi network</string>
     <string name="notif_wifi_auth_inprogress">Authentication in progress</string>
     <string name="notif_wifi_auth_fail">Authentication failed</string>
+    <string name="Edit">label_edit</string>
+    <string name="label_edit_selected">Edit</string>
 </resources>

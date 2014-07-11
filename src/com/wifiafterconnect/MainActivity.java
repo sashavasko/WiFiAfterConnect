@@ -197,6 +197,14 @@ public class MainActivity extends FragmentActivity implements LoaderCallbacks<Cu
 		DeleteAndUpdateCursorTask delTask = new DeleteAndUpdateCursorTask();
 		delTask.execute();
 	}
+	
+	public void onEditCredentialsClick (View v) {
+		WifiAuthParams authParams = new WifiAuthParams();
+		Intent intent = new Intent(this, WifiAuthenticatorActivity.class);
+		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		intent.putExtra (WifiAuthenticator.OPTION_URL, parsedPage.getURL().toString());
+		startActivity (intent);
+	}
 
 	public void onSettingsClick(View v) {
 		startActivity (new Intent(this, SettingsActivity.class));

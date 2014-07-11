@@ -126,15 +126,32 @@
         android:drawSelectorOnTop="true" >
     </ListView>
 
-    <Button
-        android:id="@+id/buttonDeleteSelected"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="right"
-        android:enabled="false"
-        android:minHeight="24dp"
-        android:onClick="onDeleteSelectedClick"
-        android:text="@string/label_delete_selected" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <Button
+            android:id="@+id/buttonEdit"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:enabled="false"
+            android:minHeight="24dp"
+            android:onClick="onEditCredentialsClick"
+            android:text="@string/label_edit_selected" />
+
+        <Button
+            android:id="@+id/buttonDeleteSelected"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:enabled="false"
+            android:minHeight="24dp"
+            android:onClick="onDeleteSelectedClick"
+            android:text="@string/label_delete_selected" />
+
+    </LinearLayout>
 
     <FrameLayout
         android:layout_width="fill_parent"

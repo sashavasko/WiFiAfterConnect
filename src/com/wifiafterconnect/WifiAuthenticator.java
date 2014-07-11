@@ -35,6 +35,14 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 
 public class WifiAuthenticator extends Worker{
+	public static final String OPTION_URL = "PARAM_URL";
+	public static final String OPTION_PAGE = "PARAM_PAGE";
+	public static final String OPTION_AUTH_HOST = "PARAM_AUTH_HOST";
+
+	private static final String CAPTIVE_PORTAL_TRACKER_NOTIFICATION_ID = "CaptivePortal.Notification"; // Android 4.2 and later
+	private static final String WALLED_GARDEN_NOTIFICATION_ID = "WifiWatchdog.walledgarden"; // Android 4.1
+	private static final String WATCHDOG_NOTIFICATION_ID = "Android.System.WifiWatchdog"; // Android 4.0
+	
 
 	public enum AuthAction { 
 		DEFAULT, BROWSER, IGNORE;
@@ -68,19 +76,25 @@ public class WifiAuthenticator extends Worker{
 	
 	private String authHost;
 	
-	public WifiAuthenticator (Worker creator, URL hostURL) {
-		super (creator);
-		authHost = hostURL.getHost();
+	public static String parseWifiHost (URL hostURL, Context context) {
+		String authHost = hostURL.getHost();
 		if (authHost.matches("([0-9]{1,3}\\.){3}[0-9]{1,3}")) // raw IP address - supplement with WiFi SSID
 		{
-			String ssid = WifiTools.getSSID(getContext());
+			String ssid = WifiTools.getSSID(context);
 			if (ssid != null) {
 				if (ssid.startsWith("\""))
 					ssid = ssid.substring(1, ssid.length()-1);
 				authHost = ssid + ":" + authHost;
 			}
 		}
+		return authHost;
 	}
+	
+	public WifiAuthenticator (Worker creator, URL hostURL) {
+		super (creator);
+		authHost = parseWifiHost(hostURL, getContext());
+	}
+
 	private WifiAuthDatabase getDb() {
 		return WifiAuthDatabase.getInstance(getContext());
 	}
@@ -111,8 +125,6 @@ public class WifiAuthenticator extends Worker{
 		return wifiDb != null? wifiDb.getWifiAction (authHost): null;
 	}
 	
-	public static final String OPTION_URL = "PARAM_URL";
-	public static final String OPTION_PAGE = "PARAM_PAGE";
 	
 	protected void notifyWifiDisabled() {
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(getContext())
@@ -188,9 +200,6 @@ public class WifiAuthenticator extends Worker{
 	 * 
 	 */
 	
-	private static final String CAPTIVE_PORTAL_TRACKER_NOTIFICATION_ID = "CaptivePortal.Notification"; // Android 4.2 and later
-	private static final String WALLED_GARDEN_NOTIFICATION_ID = "WifiWatchdog.walledgarden"; // Android 4.1
-	private static final String WATCHDOG_NOTIFICATION_ID = "Android.System.WifiWatchdog"; // Android 4.0
 	public void cancelWatchdogNotification() {
 		NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		if (nm != null) {
