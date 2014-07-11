@@ -48,7 +48,8 @@ public abstract class CaptivePageHandler {
 		"SwitchURLHandler",
 //		"AttHandler", Can be handled by GenericHandler
 		"WiNGHandler",
-		"NNUHandler"
+		"NNUHandler",
+		"HiltonHandler"
 	};
 
 	@SuppressWarnings("unchecked")

@@ -37,6 +37,7 @@ public class HtmlForm {
 	protected String id;
 	protected String action;
 	protected String method;
+	protected String onsubmit;
 	protected URL actionURL;
 	protected Map<String, HtmlInput> inputs = new HashMap<String,HtmlInput>();
 	// This will store inputs in the same order they are found in original HTML
@@ -54,6 +55,8 @@ public class HtmlForm {
 		setAction(e.attr("action"));
 
 		method = e.attr("method");
+		onsubmit = e.attr("onsubmit");
+				
     	for (Element ie : e.getElementsByTag("input")) {
     		if (BuildConfig.DEBUG)
     			Log.d(Constants.TAG, "Parsing html: form input found : " + ie.toString());
@@ -68,6 +71,10 @@ public class HtmlForm {
     	}
 	}
 	
+	public String getOnsubmit() {
+		return onsubmit;
+	}
+
 	public String getMethod () {
 		return method.toUpperCase(Locale.ENGLISH);
 	}

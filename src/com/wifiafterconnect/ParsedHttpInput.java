@@ -16,18 +16,10 @@
 
 package com.wifiafterconnect;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.HashMap;
@@ -43,6 +35,8 @@ import com.wifiafterconnect.handlers.CaptivePageHandler;
 import com.wifiafterconnect.html.HtmlForm;
 import com.wifiafterconnect.html.HtmlPage;
 import com.wifiafterconnect.html.WISPAccessGatewayParam;
+import com.wifiafterconnect.http.HttpConnectionWrapper;
+import com.wifiafterconnect.http.HttpConnectionFactory;
 import com.wifiafterconnect.util.HttpInput;
 import com.wifiafterconnect.util.Preferences;
 import com.wifiafterconnect.util.Worker;
@@ -83,10 +77,6 @@ public class ParsedHttpInput extends Worker{
 	private Map<String,String> httpHeaders;
 	
 	public static final String HTTP_HEADER_LOCATION = "Location";
-	// Yes, we are dirty liars
-	public static final String HTTP_USER_AGENT = "Mozilla/5.0 (Android; Mobile; rv:24.0) Gecko/20100101 Firefox/24.0";
-	public static final String HTTP_ACCEPT = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
-	
 
 	public ParsedHttpInput (Worker other, URL url, String html, Map<String,String> headers) {
 		super (other);
@@ -366,164 +356,22 @@ public class ParsedHttpInput extends Worker{
 	}
 
 	public static ParsedHttpInput post (Worker context, URL url, String postDataString, String cookies, String referer) {
-		context.debug("POST to url  [" + url + "]");
-		context.debug("data to post ["+postDataString+"]");
-		if (postDataString == null || postDataString.isEmpty()){
-			context.error("Failed to compile data for authentication POST");
-			return null;
-		} else if (url == null) {
-			context.error("Missing URL to POST the form");
-			return null;
+		HttpConnectionWrapper conn = HttpConnectionFactory.INSTANCE.getConnection();
+		conn.setUrl (url);
+		return conn.post(context, postDataString, cookies, referer)? valueOf(context, conn) : null; 
+	}
+	
+	private static ParsedHttpInput valueOf (Worker context, HttpConnectionWrapper conn) {
+		ParsedHttpInput parsed = null;
+		if (conn != null) {
+			parsed = new ParsedHttpInput(context, conn.getUrl(), conn.getData(), conn.getHeaders());
 		}
-
-		HttpURLConnection conn = null;
-		try {
-			URL postURL = url;
-			/*
-			int port = url.getPort(); 
-			if (port > 0 && port < 1000 && port != 80 && port != 443) 
-			{
-				InetAddress ip = lookupHost(url.getHost());
-				if (ip != null) {
-					try {
-						postURL = new URL (url.getProtocol(), ip.getHostAddress(), port, url.getFile());
-					} catch (MalformedURLException e) {
-						context.exception (e);
-					}
-				}
-			}
-			 */
-			context.debug("Post URL = [" + postURL + "]");
-			conn = (HttpURLConnection) postURL.openConnection();
-			conn.setInstanceFollowRedirects(false);
-			conn.setConnectTimeout(Constants.SOCKET_CONNECT_TIMEOUT_MS);
-			conn.setReadTimeout(Constants.SOCKET_READ_TIMEOUT_MS);
-			conn.setDoInput(true);
-			conn.setDoOutput(true);
-			conn.setUseCaches(false);
-			
-			// we need the next two to avoid 404 code on non-standard ports : 
-			conn.setRequestProperty("User-Agent",HTTP_USER_AGENT);
-			conn.setRequestProperty("Accept", HTTP_ACCEPT);
-			conn.setRequestProperty("Content-Type","application/x-www-form-urlencoded");
-			//conn.setRequestProperty("charset", "utf-8");
-            conn.setRequestProperty("Content-Length", Integer.toString(postDataString.getBytes().length));
-			conn.setRequestProperty("Origin", url.getProtocol() + "://" + url.getHost() + ":" + url.getPort());
-			conn.setRequestProperty("Connection", "close");
-			if (referer != null) {
-				conn.setRequestProperty("Referer",referer);
-			}
-			if (cookies != null)
-				conn.setRequestProperty("Cookie", cookies);
-			
-			showRequestProperties (context, conn);
-			conn.setRequestMethod("POST");
-			
-			
-			DataOutputStream output = new DataOutputStream (conn.getOutputStream());
-			output.writeBytes(postDataString);
-			output.flush();
-			output.close();
-			context.debug("Data posted, checking result ...");
-			return receive(context, conn);
-		}catch ( ProtocolException e)
-		{
-			context.exception (e);
-			return null;
-		}catch (FileNotFoundException e)
-		{
-			context.debug("Can't read result - FileNotFound exception.");
-			return null;
-		} catch (IOException e) {
-			context.exception (e);
-			return null;
-		}finally {
-			conn.disconnect();
-		}
+		return parsed;
 	}
 	
 	public static ParsedHttpInput get (Worker context, URL url, String referer) {
-		context.debug("Getting [" + url + "]");
-		if (url != null){
-			HttpURLConnection conn = null;
-			try {
-				conn = (HttpURLConnection) url.openConnection();
-				conn.setConnectTimeout(Constants.SOCKET_CONNECT_TIMEOUT_MS);
-				conn.setReadTimeout(Constants.SOCKET_READ_TIMEOUT_MS);
-				conn.setUseCaches(false);
-				conn.setRequestProperty("User-Agent",HTTP_USER_AGENT);
-				conn.setRequestProperty("Accept","*/*");
-				conn.setRequestProperty("Connection", "close");
-				if (referer != null)
-					conn.setRequestProperty("Referer",referer);
-				
-				showRequestProperties (context, conn);
-				return receive (context, conn);
-			} catch (IOException e) {
-				context.exception(e);
-			}finally {
-				conn.disconnect();
-			}
-		}
-		return null;
+		HttpConnectionWrapper conn = HttpConnectionFactory.INSTANCE.getConnection();
+		conn.setUrl (url);
+		return conn.get(context, referer)? valueOf(context, conn) : null; 
 	}
-
-	private static void showReceivedConnection (Worker context, HttpURLConnection conn, String data, int totalBytesIn, Map <String,String> headers) {
-		context.debug ("Page received:");
-		for (String key : headers.keySet())
-			context.debug("Field["+ key + "] = [" + headers.get(key) + "]");
-
-		context.debug ("Read " + totalBytesIn + " bytes:");
-		if (context.isSaveLogToFile()) {
-			context.debug (data);
-			context.debug ("#####################");
-		}
-    
-	}
-	
-	public static ParsedHttpInput receive (Worker creator, HttpURLConnection conn) {
-		ParsedHttpInput parsed = null;
-		int totalBytesIn = 0;
-		try {
-			InputStream in = null;
-			try {
-				in = new BufferedInputStream(conn.getInputStream());
-			} catch (FileNotFoundException e) {
-				in = new BufferedInputStream(conn.getErrorStream());
-			}
-
-			Map<String,String> headers = new HashMap<String,String>();
-			String field = null;
-			for (int pos = 0 ; (field = conn.getHeaderField(pos)) != null ; ++pos )
-				headers.put (conn.getHeaderFieldKey(pos), field);
-
-			if (BuildConfig.DEBUG)
-				showReceivedConnection (creator, conn, "not yet", 0, headers);
-			
-			creator.debug("Response code = " + conn.getResponseCode());
-			
-			BufferedReader r = new BufferedReader(new InputStreamReader(in));
-			StringBuilder total = new StringBuilder();
-			char []buffer = new char[4096];
-			int bytesIn;
-			while ((bytesIn = r.read(buffer, 0, 4096)) >= 0) {
-				if (bytesIn > 0) {
-					total.append(buffer, 0, bytesIn);
-					totalBytesIn += bytesIn;
-				}
-			}
-			
-			if (BuildConfig.DEBUG)
-				showReceivedConnection (creator, conn, total.toString(), totalBytesIn, headers);
-			
-			parsed = new ParsedHttpInput(creator, conn.getURL(), total.toString(), headers);
-		}catch (IOException e) {
-			creator.error ("Failed to receive from " + conn.toString());
-			creator.exception (e);
-		} catch (Throwable e) {
-			creator.exception (e);
-		}
-	    return parsed;
-	}
-
 }
