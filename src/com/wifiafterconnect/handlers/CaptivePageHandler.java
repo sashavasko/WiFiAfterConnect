@@ -49,7 +49,8 @@ public abstract class CaptivePageHandler {
 //		"AttHandler", Can be handled by GenericHandler
 		"WiNGHandler",
 		"NNUHandler",
-		"HiltonHandler"
+		"HiltonHandler",
+		"NSTreinHandler"
 	};
 
 	@SuppressWarnings("unchecked")
