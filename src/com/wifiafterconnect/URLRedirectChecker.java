@@ -39,9 +39,11 @@ import javax.net.ssl.X509TrustManager;
 
 import com.wifiafterconnect.util.Logger;
 import com.wifiafterconnect.util.Preferences;
+import com.wifiafterconnect.util.WifiTools;
 import com.wifiafterconnect.util.Worker;
 
 import android.content.Context;
+import android.net.NetworkInfo;
 
 public class URLRedirectChecker extends Worker{
 	
@@ -226,6 +228,14 @@ public class URLRedirectChecker extends Worker{
 	}
 	
 	public boolean checkHttpConnection (URL url, AuthorizationType doAuthorize) {
+        WifiTools.preferWifi(getContext());
+        NetworkInfo wifiNetworkInfo = WifiTools.getFirstWifiNetworkInfo(getContext());
+        if (wifiNetworkInfo == null) {
+            error("Unable to locate a WIFI network entry");
+            return false;
+        }
+        debug("Current Wifi state is " + wifiNetworkInfo.getDetailedState() + "/" + wifiNetworkInfo.getState());
+
 		//if (proto < 0 || proto >= protocols.length)			return false;
 		//String protocol = protocols[proto];
 		boolean success = false;
