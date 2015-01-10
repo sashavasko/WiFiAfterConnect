@@ -15,6 +15,7 @@ portals that do non-standard things, those are:
 
 * AT&amp;T Wi-Fi (free)
 * The Club, in many US malls owned by [GGP](http://ggp.com/) (free)
+* [WiFi in de trein](http://www.ns.nl/reizigers/reisinformatie/informatie/trein--en-stationsvoorzieningen/voorzieningen-in-de-trein.html#draadloos-internet-in-de-trein) (WiFi in Dutch NS trains) (free)
 * Hilton Honors
 * [Cisco Web Authentication](http://www.cisco.com/c/en/us/td/docs/wireless/controller/7-3/configuration/guide/b_cg73/b_wlc-cg_chapter_01011.html)
 * [NetNearU](http://nnu.com/)
