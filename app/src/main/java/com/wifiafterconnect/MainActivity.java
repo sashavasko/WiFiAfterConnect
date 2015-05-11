@@ -277,7 +277,7 @@ public class MainActivity extends FragmentActivity implements LoaderCallbacks<Cu
         */
 		if (wifiTools != null) {
 			boolean enabled = wifiTools.isWifiEnabled();
-			//if (!enabled || !wifiTools.isWifiAvailable())
+			//if (!enabled || !wifiTools.isWifiConnected())
 			setInternetStatus (InternetStatus.UNKNOWN);
 			setAuthenticateNowEnabled();
 			if (toggleWifi != null)

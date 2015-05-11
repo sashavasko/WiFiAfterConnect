@@ -21,7 +21,6 @@ import com.wifiafterconnect.util.WifiTools;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
 public class CheckRedirectService extends IntentService {
 
@@ -36,13 +35,11 @@ public class CheckRedirectService extends IntentService {
 	@Override
 	protected void onHandleIntent(Intent intent) {
         if (intent.getAction().equals(getString(R.string.action_check_redirect))) {
-       		if (WifiTools.isWifiAvailable(this)){
+       		if (WifiTools.isWifiConnected(this)){
        			URLRedirectChecker checker = new URLRedirectChecker (Constants.TAG, getApplicationContext());
        			checker.setSaveLogFile (null);
        			checker.checkHttpConnection ();
-        	} else {
-                Log.d(Constants.TAG, "Wifi is not connected, skipping redirect check");
-            }
+        	}
         }
 	}
 	

@@ -16,14 +16,11 @@
 
 package com.wifiafterconnect.util;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.net.ConnectivityManager;
-import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.Build;
 
 public class WifiTools {
 
@@ -134,64 +131,20 @@ public class WifiTools {
 		}
 		return null;
 	}
-
-    public static void preferWifi(Context context) {
-        if (context != null) {
-            ConnectivityManager connMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            if (connMan != null){
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    Network wifiNetwork = getFirstWifiNetwork(context);
-                    if (wifiNetwork != null) {
-                        ConnectivityManager.setProcessDefaultNetwork(wifiNetwork);
-                    }
-                } else {
-                    //Try in API 17-20 to prefer wifi
-                    connMan.setNetworkPreference(ConnectivityManager.TYPE_WIFI);
-                }
-            }
-        }
-    }
-
-    public static boolean isWifiAvailable(Context context) {
-        NetworkInfo wifiNetworkInfo = getFirstWifiNetworkInfo(context);
-        //For some reason, ConnectivityManager shows wifi as disconnected even when connected to
-        //captive portal (but the WifiManager intent showed us the true state).
-        return wifiNetworkInfo != null && wifiNetworkInfo.isAvailable();
-    }
-
-	public boolean isWifiConnected (){
-		return isWifiAvailable(context);
+	
+	public static boolean isWifiConnected (Context context){
+		if (context != null) {
+        	ConnectivityManager connMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        	if (connMan != null){
+        		NetworkInfo netInfo = connMan.getActiveNetworkInfo();
+        		return (netInfo != null && netInfo.getType() == ConnectivityManager.TYPE_WIFI && netInfo.isConnected());
+        	}
+		}
+		return false;
 	}
 
-    public static NetworkInfo getFirstWifiNetworkInfo(Context context) {
-        if (context != null) {
-            ConnectivityManager connMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            if (connMan != null){
-                for (NetworkInfo networkInfo : connMan.getAllNetworkInfo()) {
-                    //If there is a WIFI network that isn't completely disconnected, then try it out
-                    if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
-                        return networkInfo;
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private static Network getFirstWifiNetwork(Context context) {
-        if (context != null) {
-            ConnectivityManager connMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            if (connMan != null){
-                for (Network network : connMan.getAllNetworks()) {
-                    NetworkInfo networkInfo = connMan.getNetworkInfo(network);
-                    if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
-                        return network;
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
+	public boolean isWifiConnected (){
+		return isWifiConnected (context);
+	}
+		
 }

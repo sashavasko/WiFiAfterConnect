@@ -1,0 +1,77 @@
+apply plugin: 'com.android.application'
+apply plugin: 'jacoco'
+apply plugin: 'com.github.kt3k.coveralls'
+apply plugin: 'org.robolectric'
+
+android {
+    signingConfigs {
+        debug {
+            storeFile file("../debug.keystore")
+        }
+    }
+    compileSdkVersion 22
+    buildToolsVersion "22.0.1"
+    defaultConfig {
+        applicationId "com.wifiafterconnect"
+        minSdkVersion 9
+        targetSdkVersion 22
+        versionCode 3
+        versionName "1.2"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+        debug {
+            testCoverageEnabled = true
+        }
+    }
+    jacoco { version = "0.7.4.201502262128" }
+    packagingOptions {
+        exclude 'LICENSE.txt'
+    }
+}
+
+dependencies {
+    compile 'com.android.support:support-v4:22.0.0'
+    compile 'org.jsoup:jsoup:1.8.2'
+
+    // Android Testing libraries
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.0')
+
+    // Unit testing libraries
+    testCompile 'junit:junit:4.12'
+    testCompile('org.robolectric:robolectric:3.0-rc2') {
+        exclude group: 'commons-logging', module: 'commons-logging'
+        exclude group: 'org.apache.httpcomponents', module: 'httpclient'
+    }
+}
+
+def srcDirs = files(android.sourceSets.main.java.srcDirs)
+
+task coverage(type:JacocoReport, dependsOn: ["createDebugCoverageReport", "testDebug"]) {
+    description = "Coverage Report"
+    classDirectories = fileTree(
+        dir: "$buildDir/intermediates/classes/debug"
+    ) + fileTree(
+        dir: "$buildDir/intermediates/classes/androidTest"
+    )
+    sourceDirectories = srcDirs
+    executionData = files(
+        "$buildDir/outputs/code-coverage/connected/coverage.ec",  // androidTest
+        "$buildDir/jacoco/testDebug.exec"                         // test
+    )
+    reports {
+        html.enabled = true
+        xml.enabled = true
+    }
+}
+
+coveralls {
+    jacocoReportPath = "$buildDir/reports/jacoco/coverage/coverage.xml"
+    sourceDirs = srcDirs.files.absolutePath
+}
+
+apply from: "../artifacts.gradle"

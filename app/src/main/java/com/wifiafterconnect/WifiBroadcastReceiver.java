@@ -22,10 +22,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.wifi.WifiManager;
-import android.os.Build;
-import android.util.Log;
 
 public class WifiBroadcastReceiver extends BroadcastReceiver {
 
@@ -36,27 +32,11 @@ public class WifiBroadcastReceiver extends BroadcastReceiver {
 	
 	@Override
 	public void onReceive(Context context, Intent intent) {
-        if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-            Log.d(Constants.TAG, "WifiBroadcastReceiver: connectivity change");
-        }
 		if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION) 
 			&& intent.getIntExtra(ConnectivityManager.EXTRA_NETWORK_TYPE, 0) == ConnectivityManager.TYPE_WIFI){
 			boolean connected = !intent.getBooleanExtra (ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
-            Log.d(Constants.TAG, "WifiBroadcastReceiver: connectivity change for Wifi, connected=" + connected);
-            onWifiConnectivityChange(context, connected);
-
-		} else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
-            NetworkInfo wifiNetworkInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-            if (wifiNetworkInfo != null) {
-                Log.d(Constants.TAG, "WifiBroadcastReceiver: Current Wifi state is " +
-                        wifiNetworkInfo.getDetailedState() + "/" + wifiNetworkInfo.getState());
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 &&
-                        wifiNetworkInfo.getDetailedState() == NetworkInfo.DetailedState.CONNECTING ||
-                        wifiNetworkInfo.getDetailedState() == NetworkInfo.DetailedState.CAPTIVE_PORTAL_CHECK) {
-                    onWifiConnectivityChange(context, true);
-                }
-            }
-        }
+			onWifiConnectivityChange(context, connected);
+		}
 	}
 	
 	public static void setEnabled (Context context, boolean enable) {
