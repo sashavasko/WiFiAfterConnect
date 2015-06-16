@@ -30,3 +30,7 @@ proguard/
 
 #debug logs
 *.log
+
+#Gradle output
+.gradle/
+build/
