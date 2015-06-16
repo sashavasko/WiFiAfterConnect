@@ -4,11 +4,6 @@ apply plugin: 'com.github.kt3k.coveralls'
 apply plugin: 'org.robolectric'
 
 android {
-    signingConfigs {
-        debug {
-            storeFile file("../debug.keystore")
-        }
-    }
     compileSdkVersion 22
     buildToolsVersion "22.0.1"
     defaultConfig {
